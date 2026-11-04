@@ -737,7 +737,7 @@ function validate(){
     });
     const rad=wlRadioOk(),nwl=S.devs.filter(d=>{const a=art(d.a);return a&&fam(a).wl&&a.f!=='duo';}).length+(c.w_sens||0);
     if(nwl&&!rad)add('err',2,'Hai '+nwl+' dispositivi wireless ma '+CEN[m].n+' non ha la radio a bordo: aggiungi un ricetrasmettitore duo (funzione "Ricetrasmettitore").');
-    if(CEN[m].radio&&!(k&&k.ant)&&!hasOne(a=>a&&a.f==='antenna')&&nwl)add('warn',2,'La scheda wls è fornita senza antenna: aggiungi l\'antenna 868 MHz tra le periferiche (aggiunta rapida al passo 2).');
+    if(CEN[m].radio&&!(k&&k.ant)&&!hasOne(a=>a&&a.f==='antenna'&&/868/.test(a.d))&&nwl)add('warn',2,'La scheda wls è fornita senza antenna: aggiungi l\'antenna 868 MHz tra le periferiche (l\'antenna 4G non serve alla radio dei sensori).'+(/^KSI74/.test(S.cen.cab||'')?' Con il contenitore metallico l\'antenna va portata fuori dal metallo.':''));
     if(S.devs.some(d=>{const a=art(d.a);return a&&a.f==='duo'&&d.ruolo!=='rip';})&&CEN[m].radio)add('info',2,'Hai un duo ricetrasmettitore su una centrale che ha già la radio a bordo: serve solo se vuoi un secondo ricevitore.');
   }
   if(!S.cen.eth&&!has4G())add('warn',1,'Senza Ethernet né 4G la centrale non è raggiungibile da SecureWeb.');
@@ -770,6 +770,8 @@ function validate(){
     if(z.sempre&&z.emerg)add('err',4,lab+': "Sempre attiva" e "Uscita di emergenza" sono incompatibili.');
     if(z.preall&&(z.sempre||z.emerg||z.test))add('err',4,lab+': il preallarme non è compatibile con Sempre attiva, Uscita di emergenza o Test.');
     if(z.ritardo&&z.parts&&!z.parts.length)add('warn',4,lab+': zona ritardata senza partizione.');
+    if(a.k==='wired'&&z.coll==='C'&&['Tapparella','Inerziale/Rottura vetro','Analogica'].includes(z.modo))add('err',4,lab+': sulla scheda della centrale sono disponibili solo le modalità Standard e Comando (manuale pag. 81). Collegala a un modulo auxi.');
+    if(z.ritardo&&!z.logica)add('warn',4,lab+': ritardata in ingresso ma con logica di uscita Immediata (predefinita): chi esce fa scattare l\'allarme. Imposta "Ritardata" (o "Ultima uscita" per la porta d\'ingresso).');
     if(z.sempre)add('info',4,lab+': sempre attiva (non certificata IMQ).');
     if(z.modo==='Comando'&&!S.scen.length&&!S.ev.length)add('info',4,lab+': zona Comando senza scenari/eventi: non farà nulla.');
   });
@@ -800,9 +802,19 @@ function validate(){
   // automazioni
   S.scen.forEach((s,i)=>{const lab='Scenario "'+(s.nome||'S'+(i+1))+'"';if(!(s.az||[]).length)add('warn',7,lab+' non ha azioni.');
     (s.az||[]).forEach(a=>{if(!a.t||!a.a)add('warn',7,lab+': azione incompleta.');else{const o=tgOpts(a.t);if(o&&!a.tg)add('warn',7,lab+': azione "'+a.a+'" senza bersaglio.');else if(o&&!o.some(x=>x.v===a.tg))add('err',7,lab+': il bersaglio di un\'azione non esiste più.');}});});
+  const INSV={'Inserisci con ritardo':'ritardo','Inserisci istantaneo':'ins','Disinserisci':'dis','Commuta':'comm'};
+  S.scen.forEach((s,i)=>{const w={};(s.az||[]).forEach(a=>{if(a.t==='Partizione'&&INSV[a.a]&&a.tg)w[a.tg]=INSV[a.a];});const ks=Object.keys(w);if(!ks.length)return;
+    const ok=S.ins.some(x=>{const g=Object.entries(x.a||{}).filter(([p,v])=>v&&v!=='none');return g.length===ks.length&&g.every(([p,v])=>w[p]===v);});
+    if(!ok)add('warn',7,'Scenario "'+(s.nome||'S'+(i+1))+'": in centrale uno scenario richiama una modalità di inserimento, ma nessuna modalità fa esattamente queste azioni sulle partizioni. Crea una modalità dedicata al passo 4.');});
   S.ev.forEach((e,i)=>{if(!e.tipo)add('warn',7,'Evento E'+(i+1)+' incompleto.');if(!e.scen||!S.scen.some(s=>s.id===e.scen))add('err',7,'Evento E'+(i+1)+': scegli uno scenario esistente.');});
   S.notif.forEach((n,i)=>{if(!n.tipo)add('warn',7,'Notifica A'+(i+1)+' incompleta.');if(!(n.canali||[]).length||!(n.users||[]).length)add('warn',7,'Notifica A'+(i+1)+': scegli canali e utenti.');
     (n.users||[]).forEach(uid_=>{const u=S.users.find(x=>x.id===uid_);if(!u)return;if(((n.canali||[]).includes('Chiamata vocale')||(n.canali||[]).includes('SMS'))&&!u.tel)add('warn',7,'Notifica A'+(i+1)+': "'+(u.nome||'utente')+'" non ha il telefono.');if((n.canali||[]).includes('Email')&&!u.email)add('warn',7,'Notifica A'+(i+1)+': "'+(u.nome||'utente')+'" non ha l\'email.');});});
+  const chs=new Set();S.notif.forEach(n=>(n.canali||[]).forEach(x=>chs.add(x)));
+  if(chs.has('Email'))add('info',7,'Notifiche email: in centrale va configurato il server SMTP (Opzioni → Rete).');
+  if((chs.has('SMS')||chs.has('Chiamata vocale'))&&!has4G()&&!hasOne(a=>a&&a.f==='pstn'))add('err',7,'Notifiche con SMS o chiamata: serve il modulo 4G (o PSTN) con SIM.');
+  if(chs.has('Notifica push'))add('info',7,'Le notifiche push arrivano dall\'app lares 4.0 degli utenti: le Liste contatti in centrale gestiscono chiamata, SMS, email, Contact-ID e SIA IP.');
+  const nTele=S.users.filter(u=>u.tele).length,nOp=S.devs.filter(d=>{const a=art(d.a);return a&&a.f==='opera';}).length;
+  if(nTele!==nOp)add('warn',6,'Utenti con telecomando: '+nTele+', telecomandi opera tra le periferiche: '+nOp+'. In centrale il seriale del telecomando si inserisce nella pagina dell\'utente.');
   const ob=S.meta.obj||[];
   if(ob.includes('Videosorveglianza')&&!(c.tlc||0)&&!S.devs.some(d=>{const a=art(d.a);return a&&a.f==='nvr';}))add('warn',2,'Hai richiesto la videosorveglianza ma non hai inserito telecamere IP o NVR.');
   if(ob.includes('Domotica')&&!S.outs.length)add('warn',5,'Hai richiesto la domotica ma non ci sono uscite (luci, tapparelle…).');

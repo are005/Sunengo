@@ -1,5 +1,5 @@
-// Cache per uso offline. Aumentare VERSION quando si aggiorna index.html.
-const VERSION = 'dati-ksenia-v1';
+﻿// Cache per uso offline. Aumentare VERSION quando si aggiorna index.html.
+const VERSION = 'dati-ksenia-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -12,7 +12,7 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 
-// Rete prima (così gli aggiornamenti arrivano subito), cache se offline
+// Rete prima (cosÃ¬ gli aggiornamenti arrivano subito), cache se offline
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
