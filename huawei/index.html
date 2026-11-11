@@ -186,7 +186,33 @@ ol.proc{margin:6px 0;padding-left:30px}ol.proc li{margin:0 0 8px;line-height:1.4
   #print .tl{max-width:170mm}
   #print .unv{border:0;background:none;padding:0}
   #toast{display:none!important}
-}</style><link rel="manifest" href="manifest.webmanifest">
+}
+/* Grafici della stima risparmio: FV giallo, batteria verde acqua, rete blu (palette validata per daltonismo) */
+.vz{--pv:#eda100;--bat:#1baf7a;--grid:#2a78d6;--cut:#b9bcc2;margin:6px 0 12px}
+.vz-leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;margin-bottom:10px}
+.vz-leg i.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+.vz i.pv{background:var(--pv)}.vz i.bat{background:var(--bat)}.vz i.grid{background:var(--grid)}.vz i.cut{background:var(--cut)}
+.vplot{position:relative;margin:0 0 22px 46px;border-bottom:1px solid #9aa0a6}
+.vg{position:absolute;left:0;right:0;border-top:1px solid #ececec}
+.vg span{position:absolute;right:100%;margin-right:6px;transform:translateY(-50%);font-size:11px;color:var(--mut);white-space:nowrap}
+.vcols{position:absolute;inset:0;display:flex;align-items:stretch}
+.vc{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative;outline:none;border-radius:6px}
+.vc span{position:absolute;top:100%;margin-top:4px;font-size:11px;color:var(--mut)}
+.vb{display:flex;flex-direction:column-reverse;gap:2px;width:min(24px,64%)}
+.vb i,.dc i{display:block;width:100%}
+.vb i.top,.du i.top{border-radius:4px 4px 0 0}.dd i.bot{border-radius:0 0 4px 4px}
+.vc:hover,.vc:focus-visible,.dc:hover,.dc:focus-visible{background:rgba(0,0,0,.05)}
+.dcols{position:relative;display:flex}
+.dcols::before{content:"";position:absolute;left:0;right:0;top:var(--hu);border-top:1px solid #9aa0a6}
+.dc{flex:1;display:flex;flex-direction:column;align-items:center;outline:none;border-radius:4px}
+.du{display:flex;flex-direction:column-reverse;gap:2px;width:min(14px,72%);padding-bottom:1px}
+.dd{display:flex;flex-direction:column;gap:2px;width:min(14px,72%);padding-top:2px}
+.dx{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:4px}
+.vunit{font-size:11.5px;color:var(--mut);margin-top:4px}
+#tip{position:fixed;z-index:70;max-width:260px;background:#222;color:#fff;font-size:12.5px;line-height:1.4;padding:7px 10px;border-radius:8px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#tip[hidden]{display:none}
+.kpi>div small+b+small{display:block;text-transform:none;letter-spacing:0;margin-top:1px}
+@media print{.vz i{-webkit-print-color-adjust:exact;print-color-adjust:exact}#tip{display:none!important}#print .vplot{max-width:170mm}}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icon-180.png">
 <meta name="theme-color" content="#f2f3f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -198,7 +224,7 @@ ol.proc{margin:6px 0;padding-left:30px}ol.proc li{margin:0 0 8px;line-height:1.4
 <nav class="steps" id="nav"></nav>
 <main id="app"></main>
 <div class="foot" id="foot"><button class="btn" id="prev" data-act="prev" type="button">← Indietro</button><span class="mid" id="mid"></span><button class="btn pri" id="next" data-act="next" type="button">Avanti →</button></div>
-<div id="print"></div><div id="toast" hidden></div>
+<div id="print"></div><div id="toast" hidden></div><div id="tip" role="tooltip" hidden></div>
 <input type="file" id="impFile" accept=".json,application/json" hidden>
 <script>'use strict';
 /* ===== DATI DI RIFERIMENTO =====
@@ -318,7 +344,7 @@ const f1=(n,d)=>ok(n)?n.toLocaleString('it-IT',{maximumFractionDigits:d==null?1:
 const STEPS=[
   {id:'cantiere',t:'1 · Cantiere'},{id:'inverter',t:'2 · Inverter'},{id:'stringhe',t:'3 · Moduli e stringhe'},
   {id:'batterie',t:'4 · Batterie e backup'},{id:'meter',t:'5 · Comunicazione e meter'},{id:'prog',t:'6 · Programmazione batteria'},
-  {id:'fusion',t:'7 · FusionSolar'},{id:'test',t:'8 · Collaudo e documenti'}
+  {id:'risp',t:'7 · Stima risparmio'},{id:'fusion',t:'8 · FusionSolar'},{id:'test',t:'9 · Collaudo e documenti'}
 ];
 function newMod(){return {id:uid(),marca:'',modello:'',p:'',voc:'',vmp:'',isc:'',imp:'',bvoc:'',gp:''};}
 function blank(){
@@ -332,11 +358,12 @@ function blank(){
     met:{a:'',addr:'11',pos:OPT.met_pos[0],sn:'',pac:'',plim:'',limmode:OPT.limmode[0],fsp:''},
     bp:{mode:'msc',pch:'',pdis:'',socmax:'',socmin:'',socbk:'',grid:false,gridsoc:'',gridp:'',excess:OPT.excess[0]},
     fs:{nome:'',server:OPT.server[0],azienda:'',inst:'',owner:'',ownernome:'',dataconn:'',fuso:'Europe/Rome (UTC+01:00)',valuta:'EUR',tariffa:OPT.fstar[0],pacq:'',pf1:'',pf2:'',pf3:'',pven:''},
+    risp:{cons:'',prof:'sera',stag:'flat',zona:'Centro',resa:'',costo:'',detr:'',mese:'6',giorno:'serena',gs:'3'},
     chk:{},notes:''};
 }
 function migrate(d){
   const b=blank(),o=Object.assign({},b,d||{});
-  ['meta','rete','sito','bk','com','met','bp','fs','chk'].forEach(k=>{o[k]=Object.assign({},b[k],(d&&d[k])||{});});
+  ['meta','rete','sito','bk','com','met','bp','fs','risp','chk'].forEach(k=>{o[k]=Object.assign({},b[k],(d&&d[k])||{});});
   ['mods','invs','batts','acc','tou'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});
   if(!o.mods.length)o.mods=[newMod()];
   o.invs.forEach(v=>fixInv(v,o));
@@ -728,7 +755,197 @@ function stepProg(){
   return h;
 }
 function touIssHtml(){const R=touIssues();return R.map(r=>'<div class="msg '+r.lv+'">'+esc(r.t)+'</div>').join('');}
-/* ===== STEP 7: FUSIONSOLAR ===== */
+/* ===== STEP 7: STIMA DEL RISPARMIO =====
+   Simulazione oraria su giorni tipo: 12 mesi × 7 giorni della settimana × giornata serena/nuvolosa,
+   con e senza batteria, applicando la programmazione del passo 6, la limitazione del passo 5 e i prezzi qui sotto. */
+const MESI=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const GG=[31,28,31,30,31,30,31,31,30,31,30,31];
+const PVM=[4.6,5.6,8.2,9.6,11.0,11.6,12.4,11.4,9.0,7.0,5.0,4.6]; // % della produzione annua per mese (Italia, falda a sud ~30°)
+const DAYLEN=[9.3,10.5,12.0,13.4,14.6,15.2,14.9,13.9,12.5,11.0,9.7,9.0]; // ore di luce, latitudine ~42°
+const RESA={'Nord':1200,'Centro':1350,'Sud e isole':1500}; // kWh prodotti per kWp all'anno (sud, inclinazione ottimale)
+const NUV=[0.5,0.45,0.4,0.35,0.3,0.2,0.15,0.15,0.25,0.35,0.45,0.5]; // quota di giornate nuvolose per mese
+// Giornata nuvolosa = 30% della media del mese; la serena compensa in modo che la media resti quella del mese
+const meteo=m=>{const w=NUV[m];return [{f:(1-w*0.3)/(1-w),w:1-w},{f:0.3,w}];};
+const ETA=0.95; // rendimento di carica e di scarica: circa 90% andata e ritorno
+const PROF={
+  sera:{l:'Famiglia fuori casa di giorno (consumi serali)',h:[2.5,2,1.8,1.8,1.8,2,3.5,5,4,3,2.8,3,4,4,3,2.8,3,4.5,6.5,8,8.5,7.5,6,4]},
+  giorno:{l:'Famiglia presente di giorno / smart working',h:[2.5,2,1.8,1.8,1.8,2,3,4.5,5,5,5,5.5,6,5.5,4.5,4,4,4.5,5.5,6.5,6.5,5.5,4.5,3.5]},
+  att:{l:'Attività diurna (ufficio, negozio, laboratorio)',h:[1,1,1,1,1,1,1.5,4,8,9,9,9,7,7,9,9,9,8,5,2,1.5,1,1,1],we:[0.5,0.15]}
+};
+const STAG={
+  flat:{l:'Costanti tutto l\'anno',w:[1,1,1,1,1,1,1,1,1,1,1,1]},
+  inv:{l:'Più alti d\'inverno (pompa di calore, riscaldamento elettrico)',w:[1.5,1.4,1.15,0.9,0.75,0.8,0.85,0.8,0.75,0.9,1.2,1.5]},
+  est:{l:'Più alti d\'estate (climatizzazione)',w:[0.95,0.9,0.85,0.8,0.9,1.2,1.45,1.35,1.05,0.85,0.85,0.95]}
+};
+const norm=a=>{const T=a.reduce((x,y)=>x+y,0);return a.map(v=>v/T);};
+// Forma oraria della produzione per mese (mezzogiorno solare 12:12, 13:12 con l'ora legale)
+const PVSH=MESI.map((_,m)=>{const D=DAYLEN[m],noon=m>=3&&m<=9?13.2:12.2,a=noon-D/2,h=[];
+  for(let i=0;i<24;i++){let s=0;for(let k=0;k<4;k++){const x=(i+(k+0.5)/4-a)/D;if(x>0&&x<1)s+=Math.pow(Math.sin(Math.PI*x),1.5);}h.push(s);}return norm(h);});
+const RK=['pv','load','dir','chg','gch','dis','exp','imp','cut','cost','rev','lcost'];
+const rzero=()=>Object.fromEntries(RK.map(k=>[k,0]));
+function battParams(over){
+  const t=tot(),bp=S.bp;let kw=0;
+  S.batts.forEach(b=>{const p=pack(b);if(p)kw+=ok(p.kw)?p.kw:p.kwh*0.5;});
+  const kwh=over?over.kwh:t.kwh;if(over)kw=over.kw;
+  const smx=ok(num(bp.socmax))?num(bp.socmax):100,smn=ok(num(bp.socmin))?num(bp.socmin):10;
+  const lo=Math.max(smn,S.bk.a&&ok(num(bp.socbk))?num(bp.socbk):0),gs=ok(num(bp.gridsoc))?num(bp.gridsoc):smx;
+  const lim=x=>ok(num(x))&&num(x)>0?Math.min(kw,num(x)):kw;
+  return {kwh,kw,lo,cap:kwh*Math.max(0,smx-lo)/100,pch:lim(bp.pch),pdis:lim(bp.pdis),mode:bp.mode||'msc',
+    grid:!!bp.grid&&bp.mode==='tou',gtgt:kwh*Math.max(0,Math.min(gs,smx)-lo)/100,gp:lim(bp.gridp),exc:bp.excess!==OPT.excess[1]};
+}
+function expLimit(){const p=S.met.pac,v=num(S.met.plim);if(p==='zero')return 0;if(p==='kw'&&ok(v))return v;if(p==='pc'&&ok(v))return v/100*tot().kwac;return Infinity;}
+function priceAt(d,h){const f=S.fs;return f.tariffa===OPT.fstar[1]?num(f['p'+fband(d,h).toLowerCase()]):num(f.pacq);}
+function touAct(d,h){const mid=h*60+30,g=String(d);for(const t of S.tou){if(!(t.g||[]).includes(g))continue;const a=tmin(t.da),b=tmin(t.a);if(a!=null&&b!=null&&a<=mid&&mid<(b===1439?1440:b))return t.az;}return '';}
+function simulate(over){
+  const t=tot(),R=S.risp;
+  if(!(t.kwp>0))return {err:'Configura moduli e stringhe al passo 3: servono i kWp dell\'impianto.'};
+  const cons=num(R.cons);if(!(cons>0))return {err:'Inserisci i consumi annui del cliente (dalle bollette).'};
+  const resa=ok(num(R.resa))&&num(R.resa)>0?num(R.resa):RESA[R.zona]||RESA.Centro,prod=t.kwp*resa;
+  const B=battParams(over),lim=expLimit(),sale=ok(num(S.fs.pven))?num(S.fs.pven):0;
+  const P=PROF[R.prof]||PROF.sera,ST=STAG[R.stag]||STAG.flat,shW=norm(P.h),shWE=P.we?shW:norm(PROF.giorno.h);
+  const dayF=d=>P.we?(d===6?P.we[0]:(d===7?P.we[1]:1)):1,avgF=(5+dayF(6)+dayF(7))/7,wsum=ST.w.reduce((s,w,m)=>s+w*GG[m],0);
+  const ACT=[],PR=[];for(let d=1;d<=7;d++){ACT[d]=[];PR[d]=[];for(let h=0;h<24;h++){ACT[d][h]=B.mode==='tou'?touAct(d,h):'';PR[d][h]=priceAt(d,h);}}
+  const runDay=(pvD,ldD,shL,m,d,cap,rec)=>{
+    const st={E:0};let o,hr;
+    for(let rep=0;rep<3;rep++){o=rzero();hr=[];
+      for(let h=0;h<24;h++){
+        const pv=pvD*PVSH[m][h],ld=ldD*shL[h],act=ACT[d][h],pr=PR[d][h];
+        let dir=Math.min(pv,ld),sur=pv-dir,def=ld-dir,chg=0,gch=0,dis=0,exp=0;
+        if(cap>0&&B.mode==='ffg'){exp=Math.min(sur,lim);sur-=exp;}
+        if(cap>0&&(B.mode!=='tou'||act||B.exc)){chg=Math.min(sur,B.pch,Math.max(0,(cap-st.E)/ETA));st.E+=chg*ETA;sur-=chg;}
+        if(cap>0&&(B.mode!=='tou'||act==='d')){dis=Math.min(def,B.pdis,st.E*ETA);st.E-=dis/ETA;def-=dis;}
+        if(cap>0&&B.grid&&act==='c'&&st.E<B.gtgt){gch=Math.max(0,Math.min(B.gp,B.pch-chg,(B.gtgt-st.E)/ETA));st.E+=gch*ETA;}
+        const e2=Math.min(sur,Math.max(0,lim-exp));exp+=e2;const cut=sur-e2,imp=def+gch;
+        o.pv+=pv;o.load+=ld;o.dir+=dir;o.chg+=chg;o.gch+=gch;o.dis+=dis;o.exp+=exp;o.imp+=imp;o.cut+=cut;o.cost+=imp*pr;o.rev+=exp*sale;o.lcost+=ld*pr;
+        if(rec)hr.push({pv,ld,dir,chg,gch,dis,exp,imp,cut,soc:cap>0?B.lo+st.E/B.kwh*100:null});
+      }
+    }
+    return {o,hr};
+  };
+  const Y={b:rzero(),n:rzero()},M=MESI.map(()=>({b:rzero(),n:rzero()}));
+  for(let m=0;m<12;m++){
+    const pvAvg=prod*PVM[m]/100/GG[m],ldM=cons*ST.w[m]*GG[m]/wsum;
+    for(let d=1;d<=7;d++){
+      const ldD=ldM/GG[m]*dayF(d)/avgF,shL=d>=6?shWE:shW;
+      meteo(m).forEach(w=>[['b',B.cap],['n',0]].forEach(([sc,cap])=>{const r=runDay(pvAvg*w.f,ldD,shL,m,d,cap).o,k2=GG[m]/7*w.w;RK.forEach(k=>{M[m][sc][k]+=r[k]*k2;Y[sc][k]+=r[k]*k2;});}));
+    }
+  }
+  const mi=parseInt(R.mese,10),dm=isFinite(mi)?Math.max(0,Math.min(11,mi)):6,dw=meteo(dm)[R.giorno==='nuvolosa'?1:0],dd=parseInt(R.gs,10)||3;
+  const ldDay=cons*ST.w[dm]*GG[dm]/wsum/GG[dm]*dayF(dd)/avgF;
+  const day=runDay(prod*PVM[dm]/100/GG[dm]*dw.f,ldDay,dd>=6?shWE:shW,dm,dd,B.cap,true).hr;
+  const priced=Y.n.lcost>0&&isFinite(Y.n.lcost);
+  const c0=Y.n.lcost,c1=Y.n.cost-Y.n.rev,c2=Y.b.cost-Y.b.rev;
+  return {prod,resa,cons,B,Y,M,day,dm,dw,dd,priced,c0,c1,c2,savTot:c0-c2,savPV:c0-c1,savBatt:c1-c2,
+    acN:Y.n.dir/Y.n.pv,acB:(Y.b.dir+Y.b.chg)/Y.b.pv,asN:Y.n.dir/Y.n.load,asB:(Y.b.dir+Y.b.dis)/Y.b.load,cyc:B.kwh?Y.b.dis/ETA/B.kwh:0};
+}
+// Costo di listino di una batteria con n moduli del tipo m (pacchi da massimo 3 moduli)
+function battListino(m,n){const M=BMOD[m];if(!M||!n)return 0;const pm=art(M.pm);return Math.ceil(n/3)*(pm&&ok(pm.p)?pm.p:0)+n*M.p;}
+function curListino(){return S.batts.reduce((s,b)=>{const pk=pack(b);if(!pk)return s;const pm=art(pk.M.pm),br=art(pk.M.br);return s+(pm&&ok(pm.p)?pm.p:0)+pk.n*pk.M.p+(b.muro&&br&&ok(br.p)?br.p:0);},0);}
+function battCost(){const c=num(S.risp.costo);return ok(c)&&c>0?c:curListino();}
+function payback(cost,sav){const d=ok(num(S.risp.detr))?Math.max(0,Math.min(100,num(S.risp.detr))):0;return sav>0&&cost>0?cost*(1-d/100)/sav:NaN;}
+function sizeRows(){
+  const m=(S.batts[0]&&BMOD[S.batts[0].m])?S.batts[0].m:'LUNA2000-5-E0',M=BMOD[m],bc=battCost(),rows=[];
+  const curN=S.batts.reduce((x,b)=>{const pk=pack(b);return x+(pk?pk.n:0);},0),ref=battListino(m,curN);
+  for(let n=1;n<=6;n++){
+    const packs=[];let r=n;while(r>0){const k=Math.min(3,r);packs.push(k);r-=k;}
+    const kw=packs.reduce((s,k)=>s+(M.kw?M.kw[k-1]:M.kwh*k*0.5),0),kwh=M.kwh*n,R=simulate({kwh,kw});if(R.err)return [];
+    const lst=battListino(m,n),cost=ref>0?bc*lst/ref:lst;
+    rows.push({n,kwh,kw,as:R.asB,sav:R.savTot,savB:R.savBatt,cost,pb:payback(cost,R.savBatt),cyc:R.cyc,cur:S.batts.length&&Math.abs(kwh-tot().kwh)<0.01});
+  }
+  return {m,rows};
+}
+const eu=v=>ok(v)?(Math.round(v)+0).toLocaleString('it-IT')+' €':'—';
+const kwhf=v=>ok(v)?(Math.round(v)+0).toLocaleString('it-IT')+' kWh':'—';
+const pct=v=>ok(v)?Math.round(v*100)+' %':'—';
+function niceMax(v){if(!(v>0))return 1;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return [1,1.2,1.6,2,2.4,3,4,5,6,8,10].find(x=>f<=x)*e;}
+const LEGS=[['pv','FV diretto'],['bat','Batteria'],['grid','Rete']];
+function legend(items){return '<div class="vz-leg">'+items.map(([c,l])=>'<span><i class="sw '+c+'"></i>'+esc(l)+'</span>').join('')+'</div>';}
+function segs(list,H,top){const v=list.filter(x=>x[1]>0);return v.map((x,i)=>'<i class="'+x[0]+(i===v.length-1?' '+top:'')+'" style="height:'+Math.max(1,x[1]*H).toFixed(1)+'px"></i>').join('');}
+// Grafico mensile: consumi coperti da FV diretto, batteria e rete
+function monthChart(R){
+  const H=170,mx=niceMax(Math.max(...R.M.map(x=>x.b.load))),k=H/mx,ticks=[0,0.25,0.5,0.75,1].map(f=>f*mx);
+  const cols=R.M.map((x,m)=>{const b=x.b,grid=Math.max(0,b.load-b.dir-b.dis);
+    const tip=MESI[m]+': consumi '+kwhf(b.load)+' · FV diretto '+kwhf(b.dir)+' · batteria '+kwhf(b.dis)+' · rete '+kwhf(grid)+' · produzione '+kwhf(b.pv);
+    return '<div class="vc" tabindex="0" data-tip="'+esc(tip)+'" aria-label="'+esc(tip)+'"><div class="vb">'+segs([['pv',b.dir*k],['bat',b.dis*k],['grid',grid*k]],1,'top')+'</div><span>'+MESI[m]+'</span></div>';}).join('');
+  return '<div class="vz">'+legend(LEGS)+'<div class="vplot" style="height:'+H+'px">'+ticks.map(v=>'<div class="vg" style="bottom:'+(v*k).toFixed(1)+'px"><span>'+Math.round(v).toLocaleString('it-IT')+'</span></div>').join('')+'<div class="vcols">'+cols+'</div></div><div class="vunit">kWh al mese</div></div>';
+}
+// Giornata tipo: sopra l'asse cosa alimenta la casa, sotto l'asse dove va l'energia (carica batteria, immissione)
+function dayChart(R){
+  const D=R.day,up=Math.max(0.05,...D.map(h=>h.ld)),dn=Math.max(0.05,...D.map(h=>h.chg+h.gch+h.exp+h.cut));
+  const scale=190/(up+dn),hu=up*scale,hd=dn*scale;
+  const cols=D.map((h,i)=>{const gridL=Math.max(0,h.imp-h.gch);
+    const tip=String(i).padStart(2,'0')+':00–'+String(i+1).padStart(2,'0')+':00 · produzione '+f1(h.pv,2)+' kWh · consumi '+f1(h.ld,2)+' kWh · da batteria '+f1(h.dis,2)+' · dalla rete '+f1(gridL,2)+' · in batteria '+f1(h.chg+h.gch,2)+(h.gch>0.005?' (dalla rete '+f1(h.gch,2)+')':'')+' · in rete '+f1(h.exp,2)+(h.cut>0.005?' · tagliata '+f1(h.cut,2):'')+(h.soc!=null?' · SOC '+Math.round(h.soc)+' %':'');
+    return '<div class="dc" tabindex="0" data-tip="'+esc(tip)+'" aria-label="'+esc(tip)+'"><div class="du" style="height:'+hu.toFixed(1)+'px">'+segs([['pv',h.dir*scale],['bat',h.dis*scale],['grid',gridL*scale]],1,'top')+'</div><div class="dd" style="height:'+hd.toFixed(1)+'px">'+segs([['bat',(h.chg+h.gch)*scale],['grid',h.exp*scale],['cut',h.cut*scale]],1,'bot')+'</div></div>';}).join('');
+  return '<div class="vz">'+legend(LEGS.concat(D.some(h=>h.cut>0.005)?[['cut','Tagliata (limitazione)']]:[]))+
+    '<div class="dcols" style="--hu:'+hu.toFixed(1)+'px">'+cols+'</div>'+
+    '<div class="dx"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div><div class="vunit">kWh per ora · sopra l\'asse: da dove arriva l\'energia per la casa; sotto: dove va il FV in eccesso (e la carica dalla rete)</div></div>';
+}
+function rispKpi(R){
+  const pb=payback(battCost(),R.savBatt),hasB=S.batts.length>0;
+  return '<div class="kpi">'+
+    '<div><small>Produzione FV</small><b>'+kwhf(R.prod)+'</b><small>'+f1(R.resa,0)+' kWh/kWp</small></div>'+
+    '<div><small>Autosufficienza</small><b>'+pct(hasB?R.asB:R.asN)+'</b><small>'+(hasB?'senza batteria '+pct(R.asN):'solo FV')+'</small></div>'+
+    '<div><small>Autoconsumo FV</small><b>'+pct(hasB?R.acB:R.acN)+'</b><small>'+(hasB?'senza batteria '+pct(R.acN):'solo FV')+'</small></div>'+
+    (R.priced?'<div><small>Risparmio annuo</small><b>'+eu(R.savTot)+'</b><small>FV + batteria</small></div>'+(hasB?'<div><small>Di cui con la batteria</small><b>'+eu(R.savBatt)+'</b><small>in più rispetto al solo FV</small></div><div><small>Rientro batteria</small><b>'+(ok(pb)?f1(pb,1)+' anni':'—')+'</b><small>'+(num(S.risp.costo)>0?'sul prezzo indicato':'sul costo di listino')+'</small></div>':''):'')+
+    (hasB?'<div><small>Cicli equivalenti</small><b>'+f1(R.cyc,0)+' / anno</b><small>'+f1(R.B.kwh,1)+' kWh, finestra '+f1(R.B.cap,1)+' kWh</small></div>':'')+'</div>';
+}
+function scenTable(R){
+  const Y=R.Y,sale=ok(num(S.fs.pven))?num(S.fs.pven):0;
+  const row=(l,imp,exp,net)=>[l,kwhf(imp),kwhf(exp),R.priced?eu(net+exp*sale):'—',R.priced?eu(exp*sale):'—',R.priced?'<b>'+eu(net)+'</b>':'—'];
+  return tbl(['Scenario','Prelievo dalla rete','Immissione in rete','Spesa energia','Ricavo vendita','Costo netto'],[
+    row('Senza fotovoltaico',Y.n.load,0,R.c0),row('Solo fotovoltaico',Y.n.imp,Y.n.exp,R.c1)].concat(S.batts.length?[row('Fotovoltaico + batteria',Y.b.imp,Y.b.exp,R.c2)]:[]));
+}
+function monthTable(R){
+  return tbl(['Mese','Produzione','Consumi','FV diretto','Da batteria','Dalla rete','In rete'],R.M.map((x,m)=>{const b=x.b;return [MESI[m],kwhf(b.pv),kwhf(b.load),kwhf(b.dir),kwhf(b.dis),kwhf(b.load-b.dir-b.dis),kwhf(b.exp)];}).concat([['<b>Anno</b>','<b>'+kwhf(R.Y.b.pv)+'</b>','<b>'+kwhf(R.Y.b.load)+'</b>','<b>'+kwhf(R.Y.b.dir)+'</b>','<b>'+kwhf(R.Y.b.dis)+'</b>','<b>'+kwhf(R.Y.b.load-R.Y.b.dir-R.Y.b.dis)+'</b>','<b>'+kwhf(R.Y.b.exp)+'</b>']]));
+}
+function sizeTable(){
+  const z=sizeRows();if(!z.rows||!z.rows.length)return '';
+  return '<p class="sub">Stessa programmazione del passo 6, moduli '+esc(z.m)+'. Costi proporzionali al '+(num(S.risp.costo)>0?'prezzo indicato':'listino')+(ok(num(S.risp.detr))&&num(S.risp.detr)>0?', al netto della detrazione del '+esc(S.risp.detr)+' %':'')+'.</p>'+
+    tbl(['Moduli','kWh','kW','Autosufficienza','Risparmio annuo','Di cui batteria','Costo','Rientro','Cicli/anno'],z.rows.map(r=>[(r.cur?'<b>':'')+r.n+(r.cur?' ◀ attuale</b>':''),f1(r.kwh,1),f1(r.kw,1),pct(r.as),eu(r.sav),eu(r.savB),eu(r.cost),ok(r.pb)?f1(r.pb,1)+' anni':'—',f1(r.cyc,0)]));
+}
+const IPOTESI='Stima indicativa, non una garanzia. Ipotesi: giorni tipo per ogni mese, sereni e nuvolosi (dal 15% di giornate nuvolose in estate al 50% in inverno), produzione distribuita su base climatica italiana, rendimento della batteria 90% andata e ritorno, nessun degrado, festivi non considerati, solo costi variabili dell\'energia (quote fisse e potenza escluse). Per la produzione esatta del sito usa PVGIS e inserisci la resa.';
+function rispResults(){
+  const R=simulate();if(R.err)return '<div class="msg info">'+esc(R.err)+'</div>';
+  let h=rispKpi(R);
+  if(!R.priced)h+='<div class="msg info">Inserisci i prezzi dell\'energia qui sotto per vedere il risparmio in euro.</div>';
+  if(!S.batts.length)h+='<div class="msg info">Nessuna batteria al passo 4: la stima riguarda solo il fotovoltaico. Nel confronto qui sotto vedi cosa cambierebbe aggiungendola.</div>';
+  h+='<h3>Consumi coperti mese per mese</h3>'+monthChart(R)+
+    '<h3>Giornata tipo</h3><div class="grid">'+fld('risp.mese','Mese',{type:'select',opts:MESI.map((x,i)=>({v:String(i),l:x})),blank:false})+fld('risp.giorno','Giornata',{type:'select',opts:[{v:'serena',l:'Serena'},{v:'nuvolosa',l:'Nuvolosa'}],blank:false})+fld('risp.gs','Giorno',{type:'select',opts:OPT.giorni,blank:false})+'</div>'+dayChart(R)+
+    '<h3>Confronto</h3><div class="tw">'+scenTable(R)+'</div><h3>Quale batteria conviene</h3><div class="tw">'+sizeTable()+'</div>'+
+    '<details class="adv"><summary>Tabella mensile</summary><div class="tw">'+monthTable(R)+'</div></details><p class="sub" style="margin-top:10px">'+esc(IPOTESI)+'</p>';
+  return h;
+}
+function stepRisp(){
+  const t=tot(),F3=S.fs.tariffa===OPT.fstar[1],R=S.risp;
+  return head('Stima del risparmio','Quanto fa risparmiare l\'impianto, e quanto in più la batteria, con i consumi del cliente.')+
+  guide('<p>Inserisci i consumi annui (dalle bollette), quando si consuma, la zona e i prezzi dell\'energia. Il resto lo prende dai passi precedenti: kWp, batterie, programmazione, limitazione.</p>','<p>Autosufficienza, risparmio annuo con e senza batteria, rientro della batteria, grafici mensili e della giornata tipo, confronto tra taglie di batteria.</p>','<p>È una stima per spiegare l\'impianto al cliente, non una garanzia. Il prezzo di acquisto deve comprendere tutte le voci variabili (energia, trasporto, oneri, imposte).</p>')+
+  '<div class="card"><h3>Consumi del cliente</h3><div class="grid">'+
+  fld('risp.cons','Consumi annui (kWh)',{type:'number',min:0,ph:'es. 3500',help:'La somma dei consumi degli ultimi 12 mesi dalle bollette (o "consumo annuo" in prima pagina).'})+
+  fld('risp.prof','Quando si consuma',{type:'select',opts:Object.keys(PROF).map(k=>({v:k,l:PROF[k].l})),blank:false})+
+  fld('risp.stag','Consumi durante l\'anno',{type:'select',opts:Object.keys(STAG).map(k=>({v:k,l:STAG[k].l})),blank:false})+'</div></div>'+
+  '<div class="card"><h3>Produzione</h3><div class="grid">'+roFld('Potenza FV (passo 3)',f1(t.kwp,2)+' kWp')+
+  fld('risp.zona','Zona',{type:'select',opts:Object.keys(RESA).map(k=>({v:k,l:k+' (~'+RESA[k]+' kWh/kWp)'})),blank:false})+
+  fld('risp.resa','Resa (kWh/kWp all\'anno)',{type:'number',min:0,ph:String(RESA[R.zona]||RESA.Centro),help:'Lascia vuoto per usare la resa tipica della zona (falda a sud). Con esposizione est/ovest o ombre togli il 10-20%, oppure inserisci il valore di PVGIS.'})+'</div></div>'+
+  '<div class="card"><h3>Prezzi dell\'energia</h3><div class="grid">'+
+  fld('fs.tariffa','Prezzo di acquisto',{type:'select',opts:OPT.fstar,blank:false,rr:1,help:'Usa le fasce se il cliente ha una tariffa bioraria o multioraria (per la bioraria F2 = F3).'})+
+  (F3?fld('fs.pf1','F1 (€/kWh)',{type:'number',min:0,ph:'es. 0,30'})+fld('fs.pf2','F2 (€/kWh)',{type:'number',min:0,ph:'es. 0,27'})+fld('fs.pf3','F3 (€/kWh)',{type:'number',min:0,ph:'es. 0,24'}):fld('fs.pacq','Prezzo di acquisto (€/kWh)',{type:'number',min:0,ph:'es. 0,28',help:'Spesa variabile totale divisa per i kWh consumati, dalla bolletta: energia, trasporto, oneri e imposte.'}))+
+  fld('fs.pven','Prezzo di vendita (€/kWh)',{type:'number',min:0,ph:'es. 0,10',help:'Quanto viene pagata l\'energia immessa (es. ritiro dedicato). 0 se non viene venduta.'})+'</div></div>'+
+  '<div class="card"><h3>Costo della batteria</h3><div class="grid">'+
+  fld('risp.costo','Prezzo della batteria al cliente (€)',{type:'number',min:0,ph:'listino: '+Math.round(curListino())+' €',help:'Prezzo di vendita della batteria installata. Se lo lasci vuoto il rientro è calcolato sul costo di listino dei soli materiali.'})+
+  fld('risp.detr','Detrazione fiscale (%)',{type:'number',min:0,max:100,ph:'es. 0',help:'Se il cliente può detrarre la spesa: verifica l\'aliquota valida nell\'anno.'})+'</div></div>'+
+  '<div class="card"><h3>Risultato</h3><div data-live="risp">'+rispResults()+'</div></div>';
+}
+function rispDoc(){
+  const R=simulate();if(R.err)return '<h2>Stima del risparmio</h2><p>'+esc(R.err)+'</p>';
+  const P=PROF[S.risp.prof]||PROF.sera,ST=STAG[S.risp.stag]||STAG.flat;
+  return '<h2>Stima del risparmio</h2>'+tbl(['Dato','Valore'],[['Consumi annui',kwhf(R.cons)+' · '+esc(P.l)+' · '+esc(ST.l)],['Impianto',f1(tot().kwp,2)+' kWp · resa '+f1(R.resa,0)+' kWh/kWp · produzione '+kwhf(R.prod)],['Batteria',S.batts.length?f1(R.B.kwh,1)+' kWh · '+esc((OPT.modes.find(x=>x.v===S.bp.mode)||{}).l):'nessuna'],
+    ['Autosufficienza',pct(R.asN)+' solo FV'+(S.batts.length?' → '+pct(R.asB)+' con batteria':'')],['Autoconsumo FV',pct(R.acN)+' solo FV'+(S.batts.length?' → '+pct(R.acB)+' con batteria':'')],
+    ['Risparmio annuo',R.priced?eu(R.savTot)+(S.batts.length?' (di cui '+eu(R.savBatt)+' grazie alla batteria)':''):'prezzi non inseriti'],
+    ['Rientro batteria',S.batts.length&&R.priced&&ok(payback(battCost(),R.savBatt))?f1(payback(battCost(),R.savBatt),1)+' anni':'—']])+
+    '<h2>Confronto</h2>'+scenTable(R)+'<h2>Consumi coperti mese per mese</h2>'+monthChart(R)+monthTable(R)+
+    (S.batts.length||R.priced?'<h2>Quale batteria conviene</h2>'+sizeTable():'')+'<p class="meta">'+esc(IPOTESI)+'</p>';
+}
+/* ===== STEP 8: FUSIONSOLAR ===== */
 function fsNome(){return S.fs.nome||[S.meta.cliente,S.meta.comune].filter(Boolean).join(' - ');}
 function devRows(){
   const R=[],ci=comDev();
@@ -749,10 +966,7 @@ function stepFusion(){
   roFld('Capacità (kWp)',f1(t.kwp,2))+fld('fs.dataconn','Data di connessione alla rete',{type:'date'})+
   fld('fs.fuso','Fuso orario')+fld('fs.valuta','Valuta')+fld('fs.azienda','Azienda installatrice su FusionSolar')+fld('fs.inst','Account installatore (solo nome utente)')+'</div></div>'+
   '<div class="card"><h3>Proprietario</h3><div class="grid">'+fld('fs.ownernome','Nome del proprietario',{ph:S.meta.cliente||''})+fld('fs.owner','Email del proprietario',{type:'email',ph:S.meta.email||''})+'</div></div>'+
-  '<div class="card"><h3>Prezzi dell\'energia (per i ricavi in FusionSolar)</h3><div class="grid">'+
-  fld('fs.tariffa','Prezzo di acquisto',{type:'select',opts:OPT.fstar,blank:false,rr:1})+
-  (F3?fld('fs.pf1','F1 (€/kWh)',{type:'number',min:0})+fld('fs.pf2','F2 (€/kWh)',{type:'number',min:0})+fld('fs.pf3','F3 (€/kWh)',{type:'number',min:0}):fld('fs.pacq','Prezzo di acquisto (€/kWh)',{type:'number',min:0,ph:'es. 0,25'}))+
-  fld('fs.pven','Prezzo di vendita (€/kWh)',{type:'number',min:0,ph:'es. 0,10'})+'</div></div>'+
+  '<div class="card"><h3>Prezzi dell\'energia (per i ricavi in FusionSolar)</h3><div class="grid">'+roFld('Prezzo di acquisto',F3?'F1 '+eur(f.pf1)+' · F2 '+eur(f.pf2)+' · F3 '+eur(f.pf3)+' €/kWh':eur(f.pacq)+' €/kWh')+roFld('Prezzo di vendita',eur(f.pven)+' €/kWh')+'</div><p class="sub" style="margin-top:8px">Si inseriscono al passo 7 (Stima risparmio). <button type="button" class="btn sm" data-act="goto" data-st="6">Modifica</button></p></div>'+
   '<div class="card"><h3>Dispositivi da aggiungere all\'impianto</h3>'+tbl(['Dispositivo','SN'],devRows().map(r=>[r[0],r[1]||'<span class="unv">SN mancante</span>']))+'</div>';
 }
 /* ===== CHECKLIST ===== */
@@ -897,19 +1111,21 @@ function validate(){
     if(bp.mode==='ffg'&&(pac==='zero'||/^Immissione zero/.test(S.rete.regime||'')))add('err',5,'"Immissione totale in rete" non ha senso con immissione zero.');
     if(bp.mode==='tpd')add('info',5,'Dispacciamento di terze parti: serve un sistema esterno che invii i comandi, altrimenti la batteria resta ferma.');
   }
-  // 7 FusionSolar
+  // 7 Stima risparmio
+  if(S.invs.length&&!(num(S.risp.cons)>0))add('info',6,'Inserisci i consumi annui del cliente per stimare il risparmio.');
+  // 8 FusionSolar
   if(S.invs.length){
-    if(!fsNome())add('warn',6,'Dai un nome all\'impianto su FusionSolar.');
-    if(!S.fs.owner&&!S.meta.email)add('warn',6,'Manca l\'email del proprietario da invitare.');
-    if(!S.fs.dataconn)add('info',6,'Indica la data di connessione alla rete.');
-    if(S.fs.tariffa===OPT.fstar[1]?!(S.fs.pf1&&S.fs.pf2&&S.fs.pf3):!S.fs.pacq)add('info',6,'Inserisci i prezzi di acquisto per vedere i risparmi in FusionSolar.');
+    if(!fsNome())add('warn',7,'Dai un nome all\'impianto su FusionSolar.');
+    if(!S.fs.owner&&!S.meta.email)add('warn',7,'Manca l\'email del proprietario da invitare.');
+    if(!S.fs.dataconn)add('info',7,'Indica la data di connessione alla rete.');
+    if(S.fs.tariffa===OPT.fstar[1]?!(S.fs.pf1&&S.fs.pf2&&S.fs.pf3):!S.fs.pacq)add('info',6,'Inserisci i prezzi di acquisto per stimare il risparmio e vedere i ricavi in FusionSolar.');
     if(!S.fs.pven)add('info',6,'Inserisci il prezzo di vendita dell\'energia immessa.');
-    const miss=S.invs.filter(v=>!v.sn).length;if(miss)add('info',6,miss+' inverter senza numero seriale.');
+    const miss=S.invs.filter(v=>!v.sn).length;if(miss)add('info',7,miss+' inverter senza numero seriale.');
   }
-  // 8 Collaudo
+  // 9 Collaudo
   const L=chkOn(),done=L.filter(x=>S.chk[x.k]).length;
-  if(S.invs.length&&done<L.length)add('info',7,'Checklist di collaudo: '+done+' di '+L.length+' voci completate.');
-  if(/^CEI0-21/.test(S.rete.gc||'')&&S.invs.length&&!S.chk.ips)add('warn',7,'Test IPS (CEI 0-21) non ancora segnato come eseguito: il report serve per la pratica.');
+  if(S.invs.length&&done<L.length)add('info',8,'Checklist di collaudo: '+done+' di '+L.length+' voci completate.');
+  if(/^CEI0-21/.test(S.rete.gc||'')&&S.invs.length&&!S.chk.ips)add('warn',8,'Test IPS (CEI 0-21) non ancora segnato come eseguito: il report serve per la pratica.');
   return R;
 }
 function stepStatus(R){const o={};R.forEach(r=>{const cur=o[r.st];if(r.lv==='err')o[r.st]='err';else if(r.lv==='warn'&&cur!=='err')o[r.st]='warn';});return o;}
@@ -991,13 +1207,14 @@ const DOCS=[
     (S.acc.length?'<h2>Accessori</h2>'+tbl(['#','Articolo','Q.tà','SN','Note'],S.acc.map((x,i)=>['A'+(i+1),esc(x.a==='ALTRO'?x.d:x.a),esc(x.q),esc(x.sn),esc(x.desc)])):'')},
   {id:'prog',t:'Programmazione batteria',s:'Parametri e fasce TOU',fn:()=>{const b=S.bp;return '<h2>Programmazione della batteria</h2>'+tbl(['Parametro (FusionSolar)','Valore'],[['Modalità (Working mode)',esc((OPT.modes.find(x=>x.v===b.mode)||{}).l)],['SOC di fine carica (End-of-charge SOC)',esc(b.socmax?b.socmax+' %':'')],['SOC di fine scarica (End-of-discharge SOC)',esc(b.socmin?b.socmin+' %':'')],['Potenza max di carica',esc(b.pch?b.pch+' kW':'massima')],['Potenza max di scarica',esc(b.pdis?b.pdis+' kW':'massima')],['SOC di backup (Backup power SOC)',esc(S.bk.a?(b.socbk?b.socbk+' %':''):'— (nessun backup)')],['Carica dalla rete (Charge from grid)',b.grid?'Attiva':'Disattiva'],['SOC fine carica dalla rete (Grid charge cutoff SOC)',esc(b.grid?(b.gridsoc?b.gridsoc+' %':''):'')],['Potenza max carica dalla rete',esc(b.grid?(b.gridp?b.gridp+' kW':''):'')],['Energia FV in eccesso (TOU)',esc(b.mode==='tou'?b.excess:'')]])+
     (b.mode==='tou'?'<h2>Fasce orarie (TOU)</h2>'+tbl(['#','Inizio','Fine','Azione','Giorni'],S.tou.map((x,i)=>['T'+(i+1),esc(x.da),esc(x.a),x.az==='c'?'Carica':'Scarica',esc(OPT.giorni.filter(g=>(x.g||[]).includes(g.v)).map(g=>g.l).join(' '))]))+touTimeline():'');}},
+  {id:'risp',t:'Stima del risparmio',s:'Da consegnare al cliente',fn:rispDoc},
   {id:'fs',t:'Impianto FusionSolar',s:'Dati portale e seriali',fn:()=>{const f=S.fs;return '<h2>Impianto su FusionSolar</h2>'+tbl(['Campo','Valore'],[['Nome impianto',esc(fsNome())],['Server',esc(f.server)],['Capacità',f1(tot().kwp,2)+' kWp'],['Data connessione',esc(f.dataconn)],['Fuso / valuta',esc(f.fuso+' / '+f.valuta)],['Azienda / account installatore',esc([f.azienda,f.inst].filter(Boolean).join(' / '))],['Proprietario',esc((f.ownernome||S.meta.cliente||'')+' · '+(f.owner||S.meta.email||''))],['Prezzo di acquisto',f.tariffa===OPT.fstar[1]?'F1 '+eur(f.pf1)+' · F2 '+eur(f.pf2)+' · F3 '+eur(f.pf3)+' €/kWh':eur(f.pacq)+' €/kWh'],['Prezzo di vendita',eur(f.pven)+' €/kWh']])+'<h2>Dispositivi e seriali</h2>'+tbl(['Dispositivo','SN'],devRows());}},
   {id:'proc',t:'Procedura passo-passo',s:'Cosa impostare in FusionSolar',fn:()=>'<h2>Procedura di messa in servizio (FusionSolar)</h2>'+proc()},
   {id:'chk',t:'Checklist di collaudo',s:'Da spuntare in cantiere',fn:()=>'<h2>Checklist di collaudo</h2>'+tbl(['Fatto','Verifica'],chkOn().map(x=>[S.chk[x.k]?'☑':'☐',esc(x.t)]))},
   {id:'bom',t:'Distinta materiali',s:'Codici di listino, senza prezzi',fn:()=>'<h2>Distinta materiali</h2>'+tbl(['Codice','Descrizione','Totale','Incluso','Da ordinare'],bom().map(r=>[esc(r.c),esc(r.d),r.q,r.qk||'',r.o]))},
   {id:'test',t:'Esito test e descrizione',s:'Riepilogo per Claude',fn:()=>'<h2>Esito del test</h2>'+runTest().html.replace(/<button[^>]*>.*?<\/button>/g,'')}
 ];
-/* ===== STEP 8: COLLAUDO E DOCUMENTI ===== */
+/* ===== STEP 9: COLLAUDO E DOCUMENTI ===== */
 function stepTest(){
   const R=validate(),e=R.filter(x=>x.lv==='err').length,w=R.filter(x=>x.lv==='warn').length;
   return head('Collaudo e documenti','Controlla la coerenza, spunta il collaudo e prepara i documenti.')+
@@ -1017,11 +1234,13 @@ const SICON=['<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20
   '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2"/><path d="M11 9l-2 3h4l-2 3"/>',
   '<path d="M2 9a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1"/>',
   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  '<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
   '<path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/>',
   '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>'];
-const FN=[stepCantiere,stepInverter,stepStringhe,stepBatterie,stepMeter,stepProg,stepFusion,stepTest];
-const LIVE={calc:k=>calcHtml(+k),kwp:kwpCard,tl:touTimeline,touiss:touIssHtml};
-function live(){$$('[data-live]').forEach(el=>{const [f,k]=el.dataset.live.split(':');if(LIVE[f])el.innerHTML=LIVE[f](k);});}
+const FN=[stepCantiere,stepInverter,stepStringhe,stepBatterie,stepMeter,stepProg,stepRisp,stepFusion,stepTest];
+const LIVE={calc:k=>calcHtml(+k),kwp:kwpCard,tl:touTimeline,touiss:touIssHtml,risp:rispResults};
+function live(){clearTimeout(live.t);live.t=setTimeout(liveNow,90);}
+function liveNow(){$$('[data-live]').forEach(el=>{const [f,k]=el.dataset.live.split(':');if(LIVE[f])el.innerHTML=LIVE[f](k);});}
 function render(keep){
   const y=window.scrollY,ae=document.activeElement,fp=ae&&ae.dataset?ae.dataset.p:null;
   const body=FN[step]();
@@ -1094,7 +1313,8 @@ function doPrint(){
 }
 function fname(ext){const c=(S.meta.cliente||'impianto').replace(/[^\w\-]+/g,'_').slice(0,30);return 'Huawei_'+c+'_'+new Date().toISOString().slice(0,10)+'.'+ext;}
 function dl(name,text,type){const b=new Blob([text],{type:type||'application/octet-stream'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},500);}
-function expJson(){dl(fname('json'),JSON.stringify({tipo:'huawei-fusionsolar-impianto',versione:1,data:new Date().toISOString(),listino:LISTINO,impianto:S,riepilogo:{kwp:+tot().kwp.toFixed(3),kwac:tot().kwac,kwh:tot().kwh,controlli:validate()}},null,1),'application/json');toast('File salvato: allegalo a Claude');}
+function rispSummary(){const R=simulate();if(R.err)return null;const r=v=>Math.round(v),pb=payback(battCost(),R.savBatt);return {produzione_kwh:r(R.prod),consumi_kwh:r(R.cons),autosufficienza_solo_fv:+R.asN.toFixed(3),autosufficienza_con_batteria:+R.asB.toFixed(3),risparmio_annuo_eur:R.priced?r(R.savTot):null,risparmio_batteria_eur:R.priced?r(R.savBatt):null,rientro_batteria_anni:R.priced&&ok(pb)?+pb.toFixed(1):null};}
+function expJson(){dl(fname('json'),JSON.stringify({tipo:'huawei-fusionsolar-impianto',versione:1,data:new Date().toISOString(),listino:LISTINO,impianto:S,riepilogo:{kwp:+tot().kwp.toFixed(3),kwac:tot().kwac,kwh:tot().kwh,risparmio:rispSummary(),controlli:validate()}},null,1),'application/json');toast('File salvato: allegalo a Claude');}
 function expCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',n=v=>v==null?'':String(v).replace('.',',');
   const rows=[['Codice','Descrizione','Totale','Incluso','Da ordinare','Prezzo listino €','Totale listino €']].concat(bom().map(r=>[r.c,r.d,r.q,r.qk,r.o,n(r.p),r.p==null?'':n(+(r.p*r.o).toFixed(2))]));
   dl(fname('csv'),'﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n')+'\r\n'+q('Prezzi: '+LISTINO+', IVA esclusa'),'text/csv');}
@@ -1104,6 +1324,11 @@ function impFile(f){
     S=migrate(o.impianto);LASTTEST=null;OPEN={};step=0;save();render(false);toast('Impianto caricato');}catch(er){toast('File non valido: '+er.message);}};
   rd.readAsText(f);
 }
+/* ===== TOOLTIP DEI GRAFICI ===== */
+function showTip(el){const t=$('#tip');t.innerHTML=esc(el.dataset.tip).replace(/ · /g,'<br>');t.hidden=false;
+  const r=el.getBoundingClientRect(),w=t.offsetWidth,h=t.offsetHeight;let x=r.left+r.width/2-w/2,y=r.top-h-8;
+  x=Math.max(8,Math.min(window.innerWidth-w-8,x));if(y<8)y=r.bottom+8;t.style.left=x+'px';t.style.top=y+'px';}
+function hideTip(){const t=$('#tip');if(t)t.hidden=true;}
 /* ===== AVVIO ===== */
 function init(){
   load();
@@ -1116,6 +1341,11 @@ function init(){
   $('#foot').addEventListener('click',act);
   $('header.top').addEventListener('click',act);
   $('#impFile').addEventListener('change',e=>{if(e.target.files[0])impFile(e.target.files[0]);e.target.value='';});
+  app.addEventListener('pointerover',e=>{const el=e.target.closest('[data-tip]');if(el)showTip(el);});
+  app.addEventListener('pointerout',e=>{const el=e.target.closest('[data-tip]');if(el&&!el.contains(e.relatedTarget))hideTip();});
+  app.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip]');if(el)showTip(el);});
+  app.addEventListener('focusout',hideTip);
+  window.addEventListener('scroll',hideTip,{passive:true});
   render(false);
 }
 document.addEventListener('DOMContentLoaded',init);
