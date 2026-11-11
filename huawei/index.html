@@ -361,11 +361,16 @@ const uid=()=>'i'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).
 const num=v=>{if(v==null||v==='')return NaN;return parseFloat(String(v).replace(',','.'));};
 const ok=n=>typeof n==='number'&&isFinite(n);
 const f1=(n,d)=>ok(n)?n.toLocaleString('it-IT',{maximumFractionDigits:d==null?1:d}):'—';
-const STEPS=[
-  {id:'cantiere',t:'1 · Cantiere'},{id:'inverter',t:'2 · Inverter'},{id:'stringhe',t:'3 · Moduli e stringhe'},
-  {id:'batterie',t:'4 · Batterie e backup'},{id:'meter',t:'5 · Comunicazione e meter'},{id:'mag',t:'6 · Materiali e magazzino'},
-  {id:'prog',t:'7 · Programmazione batteria'},{id:'risp',t:'8 · Stima risparmio'},{id:'fusion',t:'9 · FusionSolar'},{id:'test',t:'10 · Collaudo e documenti'}
+const ALLSTEPS=[
+  {id:'cantiere',t:'Cantiere'},{id:'inverter',t:'Inverter'},{id:'stringhe',t:'Moduli e stringhe'},
+  {id:'batterie',t:'Batterie e backup'},{id:'meter',t:'Comunicazione e meter'},{id:'mag',t:'Materiali e magazzino'},
+  {id:'prog',t:'Programmazione batteria'},{id:'risp',t:'Stima risparmio',opt:1},{id:'fusion',t:'FusionSolar'},{id:'test',t:'Collaudo e documenti'}
 ];
+let STEPS=[];
+// La stima del risparmio si vede (passo e stampa) solo se spuntata al passo 1
+const hasRisp=()=>!!(S&&S.meta&&S.meta.stima);
+function buildSteps(){const cur=STEPS[step]&&STEPS[step].id;STEPS=ALLSTEPS.filter(x=>!x.opt||hasRisp()).map((x,i)=>({id:x.id,t:(i+1)+' · '+x.t}));
+  if(cur){const k=STEPS.findIndex(x=>x.id===cur);step=k>=0?k:Math.min(step,STEPS.length-1);}}
 const SI=id=>STEPS.findIndex(s=>s.id===id);
 function newMod(){return {id:uid(),marca:'',modello:'',p:'',voc:'',vmp:'',isc:'',imp:'',bvoc:'',gp:''};}
 function blank(){
@@ -396,6 +401,7 @@ function load(){
   try{CUSTOM=JSON.parse(localStorage.getItem(CKEY)||'[]');if(!Array.isArray(CUSTOM))CUSTOM=[];}catch(e){CUSTOM=[];}
   ARTMAP=null;
   try{const s=localStorage.getItem(KEY);S=s?migrate(JSON.parse(s)):blank();}catch(e){S=blank();}
+  STEPS=[];buildSteps();
   try{step=Math.min(STEPS.length-1,Math.max(0,parseInt(localStorage.getItem(SKEY)||'0',10)||0));}catch(e){step=0;}
 }
 function save(){
@@ -604,7 +610,8 @@ function stepCantiere(){
   fld('rete.regime','Regime di cessione',{type:'select',opts:OPT.regime})+
   fld('rete.accumulo','Accumulo dichiarato nella pratica',{type:'select',opts:OPT.accumulo,help:'Come è stato dichiarato il sistema di accumulo nella pratica di connessione (distributore / GAUDÌ). Se è "monodirezionale" la batteria non deve caricare dalla rete.'})+
   fld('rete.tariffa','Tariffa del cliente',{type:'select',opts:OPT.tariffa,help:'Serve per scegliere la modalità della batteria: con fasce F1/F2/F3 o PUN può convenire la modalità a fasce orarie (TOU).'})+
-  '</div><div style="margin-top:12px">'+fld('meta.note','Note generali',{type:'textarea'})+'</div></div>';
+  '</div><div style="margin-top:12px">'+fld('meta.note','Note generali',{type:'textarea'})+'</div></div>'+
+  '<div class="card"><h3>Opzioni</h3>'+fld('meta.stima','Stima del risparmio',{type:'check',text:'Mostra il passo "Stima risparmio" e la sua stampa per il cliente',rr:1,help:'Facoltativa: se la spunti compare un passo in più con autosufficienza, risparmio annuo e rientro della batteria, e la relativa pagina tra i documenti da stampare.'})+'</div>';
 }
 /* ===== STEP 2: INVERTER ===== */
 function customSpec(i){
@@ -955,7 +962,7 @@ function monthTable(R){
 }
 function sizeTable(){
   const z=sizeRows();if(!z.rows||!z.rows.length)return '';
-  return '<p class="sub">Stessa programmazione del passo 7, moduli '+esc(z.m)+'. Costi proporzionali al '+(num(S.risp.costo)>0?'prezzo indicato':'listino')+(ok(num(S.risp.detr))&&num(S.risp.detr)>0?', al netto della detrazione del '+esc(S.risp.detr)+' %':'')+'.</p>'+
+  return '<p class="sub">Stessa programmazione del passo "Programmazione batteria", moduli '+esc(z.m)+'. Costi proporzionali al '+(num(S.risp.costo)>0?'prezzo indicato':'listino')+(ok(num(S.risp.detr))&&num(S.risp.detr)>0?', al netto della detrazione del '+esc(S.risp.detr)+' %':'')+'.</p>'+
     tbl(['Moduli','kWh','kW','Autosufficienza','Risparmio annuo','Di cui batteria','Costo','Rientro','Cicli/anno'],z.rows.map(r=>[(r.cur?'<b>':'')+r.n+(r.cur?' ◀ attuale</b>':''),f1(r.kwh,1),f1(r.kw,1),pct(r.as),eu(r.sav),eu(r.savB),eu(r.cost),ok(r.pb)?f1(r.pb,1)+' anni':'—',f1(r.cyc,0)]));
 }
 const IPOTESI='Stima indicativa, non una garanzia. Ipotesi: giorni tipo per ogni mese, sereni e nuvolosi (dal 15% di giornate nuvolose in estate al 50% in inverno), produzione distribuita su base climatica italiana, rendimento della batteria 90% andata e ritorno, nessun degrado, festivi non considerati, solo costi variabili dell\'energia (quote fisse e potenza escluse). Per la produzione esatta del sito usa PVGIS e inserisci la resa.';
@@ -1021,7 +1028,10 @@ function stepFusion(){
   roFld('Capacità (kWp)',f1(t.kwp,2))+fld('fs.dataconn','Data di connessione alla rete',{type:'date'})+
   fld('fs.fuso','Fuso orario')+fld('fs.valuta','Valuta')+fld('fs.azienda','Azienda installatrice su FusionSolar')+fld('fs.inst','Account installatore (solo nome utente)')+'</div></div>'+
   '<div class="card"><h3>Proprietario</h3><div class="grid">'+fld('fs.ownernome','Nome del proprietario',{ph:S.meta.cliente||''})+fld('fs.owner','Email del proprietario',{type:'email',ph:S.meta.email||''})+'</div></div>'+
-  '<div class="card"><h3>Prezzi dell\'energia (per i ricavi in FusionSolar)</h3><div class="grid">'+roFld('Prezzo di acquisto',F3?'F1 '+eur(f.pf1)+' · F2 '+eur(f.pf2)+' · F3 '+eur(f.pf3)+' €/kWh':eur(f.pacq)+' €/kWh')+roFld('Prezzo di vendita',eur(f.pven)+' €/kWh')+'</div><p class="sub" style="margin-top:8px">Si inseriscono al passo 8 (Stima risparmio). <button type="button" class="btn sm" data-act="goto" data-st="'+SI('risp')+'">Modifica</button></p></div>'+
+  '<div class="card"><h3>Prezzi dell\'energia (per i ricavi in FusionSolar)</h3><div class="grid">'+
+  fld('fs.tariffa','Prezzo di acquisto',{type:'select',opts:OPT.fstar,blank:false,rr:1})+
+  (F3?fld('fs.pf1','F1 (€/kWh)',{type:'number',min:0})+fld('fs.pf2','F2 (€/kWh)',{type:'number',min:0})+fld('fs.pf3','F3 (€/kWh)',{type:'number',min:0}):fld('fs.pacq','Prezzo di acquisto (€/kWh)',{type:'number',min:0,ph:'es. 0,28'}))+
+  fld('fs.pven','Prezzo di vendita (€/kWh)',{type:'number',min:0,ph:'es. 0,10'})+'</div></div>'+
   '<div class="card"><h3>Dispositivi da aggiungere all\'impianto</h3>'+tbl(['Dispositivo','SN'],devRows().map(r=>[r[0],r[1]||'<span class="unv">SN mancante</span>']))+'</div>';
 }
 /* ===== CHECKLIST ===== */
@@ -1050,7 +1060,7 @@ const chkOn=()=>CHK.filter(x=>!x.c||x.c());
 function chkHtml(){let g='',h='';chkOn().forEach(x=>{if(x.g&&x.g!==g){g=x.g;h+='<h4>'+esc(g)+'</h4>';}h+='<label class="ck"><input type="checkbox" data-p="chk.'+x.k+'"'+(S.chk[x.k]?' checked':'')+'> '+esc(x.t)+'</label>';});return h;}
 /* ===== REGOLE ===== */
 function validate(){
-  const R=[],add=(lv,st,t)=>R.push({lv,st:SI(st),t});
+  const R=[],add=(lv,st,t)=>{const k=SI(st);if(k>=0)R.push({lv,st:k,t});};
   const t=tot(),pimm=num(S.rete.pimm),pprel=num(S.rete.pprel),mono=S.rete.allaccio==='Monofase',bp=S.bp;
   // 1 Cantiere
   if(!S.meta.cliente)add('warn','cantiere','Manca il nome del cliente.');
@@ -1172,14 +1182,14 @@ function validate(){
   S.mag.forEach((x,i)=>{if(!x.a&&!x.d)add('warn','mag','X'+(i+1)+': scrivi modello o descrizione del materiale.');if(!(num(x.q)>0))add('warn','mag','X'+(i+1)+': quantità mancante.');if(x.a&&!art(x.a))add('warn','mag','X'+(i+1)+': articolo non più presente negli articoli.');});
   if(S.invs.length&&!S.meta.commessa)add('info','mag','Indica il numero di commessa per la stampa di magazzino.');
   // 7 Stima risparmio
-  if(S.invs.length&&!(num(S.risp.cons)>0))add('info','risp','Inserisci i consumi annui del cliente per stimare il risparmio.');
+  if(hasRisp()&&S.invs.length&&!(num(S.risp.cons)>0))add('info','risp','Inserisci i consumi annui del cliente per stimare il risparmio.');
   // 8 FusionSolar
   if(S.invs.length){
     if(!fsNome())add('warn','fusion','Dai un nome all\'impianto su FusionSolar.');
     if(!S.fs.owner&&!S.meta.email)add('warn','fusion','Manca l\'email del proprietario da invitare.');
     if(!S.fs.dataconn)add('info','fusion','Indica la data di connessione alla rete.');
-    if(S.fs.tariffa===OPT.fstar[1]?!(S.fs.pf1&&S.fs.pf2&&S.fs.pf3):!S.fs.pacq)add('info','risp','Inserisci i prezzi di acquisto per stimare il risparmio e vedere i ricavi in FusionSolar.');
-    if(!S.fs.pven)add('info','risp','Inserisci il prezzo di vendita dell\'energia immessa.');
+    if(S.fs.tariffa===OPT.fstar[1]?!(S.fs.pf1&&S.fs.pf2&&S.fs.pf3):!S.fs.pacq)add('info',hasRisp()?'risp':'fusion','Inserisci i prezzi di acquisto per vedere i ricavi in FusionSolar'+(hasRisp()?' e stimare il risparmio':'')+'.');
+    if(!S.fs.pven)add('info',hasRisp()?'risp':'fusion','Inserisci il prezzo di vendita dell\'energia immessa.');
     const miss=S.invs.filter(v=>!v.sn).length;if(miss)add('info','fusion',miss+' inverter senza numero seriale.');
   }
   // 9 Collaudo
@@ -1398,7 +1408,7 @@ function stepTest(){
   '<div class="card"><h3>Procedura per FusionSolar</h3>'+proc()+'</div>'+
   '<div class="card chk"><h3>Checklist di collaudo</h3>'+chkHtml()+'</div>'+
   '<div class="card"><h3>Documenti da stampare</h3><p class="sub">Scegli quali includere, poi premi Stampa (dal browser puoi salvare in PDF).</p><div class="docs">'+
-  DOCS.map(d=>'<label><input type="checkbox" data-doc="'+d.id+'" checked> <span><b>'+esc(d.t)+'</b><small>'+esc(d.s)+'</small></span></label>').join('')+'</div>'+
+  DOCS.filter(d=>d.id!=='risp'||hasRisp()).map(d=>'<label><input type="checkbox" data-doc="'+d.id+'" checked> <span><b>'+esc(d.t)+'</b><small>'+esc(d.s)+'</small></span></label>').join('')+'</div>'+
   '<div class="chips" style="margin-top:12px"><button type="button" class="btn pri" data-act="print">🖨 Stampa / salva PDF</button><button type="button" class="btn" data-act="exp-json">⬇ File per Claude (.json)</button><button type="button" class="btn" data-act="exp-csv">⬇ Distinta (.csv)</button></div></div>'+
   '<div class="card">'+fld('notes','Note finali',{type:'textarea'})+'</div>';
 }
@@ -1413,21 +1423,22 @@ const SICON=['<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20
   '<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
   '<path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/>',
   '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>'];
-const FN=[stepCantiere,stepInverter,stepStringhe,stepBatterie,stepMeter,stepMag,stepProg,stepRisp,stepFusion,stepTest];
+const FNMAP={cantiere:stepCantiere,inverter:stepInverter,stringhe:stepStringhe,batterie:stepBatterie,meter:stepMeter,mag:stepMag,prog:stepProg,risp:stepRisp,fusion:stepFusion,test:stepTest};
+const SICONM={};ALLSTEPS.forEach((x,i)=>{SICONM[x.id]=SICON[i];});
 const LIVE={calc:k=>calcHtml(+k),kwp:kwpCard,tl:touTimeline,touiss:touIssHtml,risp:rispResults,mag:magTable};
 function live(){clearTimeout(live.t);live.t=setTimeout(liveNow,90);}
 function liveNow(){$$('[data-live]').forEach(el=>{const [f,k]=el.dataset.live.split(':');if(LIVE[f])el.innerHTML=LIVE[f](k);});}
 function render(keep){
   const y=window.scrollY,ae=document.activeElement,fp=ae&&ae.dataset?ae.dataset.p:null;
-  const body=FN[step]();
-  $('#app').innerHTML='<div class="bnr"><div class="bi"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+SICON[step]+'</svg></div><div class="bt"><small>Huawei FusionSolar · passo '+(step+1)+' di '+STEPS.length+'</small><b>'+esc(CURTITLE)+'</b></div></div><div class="card">'+body+'</div>';
+  const body=FNMAP[STEPS[step].id]();
+  $('#app').innerHTML='<div class="bnr"><div class="bi"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+SICONM[STEPS[step].id]+'</svg></div><div class="bt"><small>Huawei FusionSolar · passo '+(step+1)+' di '+STEPS.length+'</small><b>'+esc(CURTITLE)+'</b></div></div><div class="card">'+body+'</div>';
   renderNav();
   if(keep!==false)window.scrollTo(0,y);
   if(fp&&keep!==false){const el=$('#app [data-p="'+fp+'"]');if(el&&el.tagName!=='SELECT')try{el.focus({preventScroll:true});}catch(e){}}
 }
 function renderNav(){
   const st=stepStatus(validate());
-  $('#nav').innerHTML=STEPS.map((s,i)=>'<button type="button" data-act="goto" data-st="'+i+'" class="'+(i===step?'on':'')+'"><span class="ic c'+(i%5)+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+SICON[i]+'</svg><i class="dot '+(st[i]||'')+'"></i></span>'+esc(s.t.replace(/^\d+ · /,''))+'</button>').join('');
+  $('#nav').innerHTML=STEPS.map((s,i)=>'<button type="button" data-act="goto" data-st="'+i+'" class="'+(i===step?'on':'')+'"><span class="ic c'+(i%5)+'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+SICONM[s.id]+'</svg><i class="dot '+(st[i]||'')+'"></i></span>'+esc(s.t.replace(/^\d+ · /,''))+'</button>').join('');
   const on=$('#nav .on');if(on&&on.scrollIntoView)try{on.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
   $('#prev').disabled=step===0;$('#next').disabled=step===STEPS.length-1;
   $('#mid').textContent='Passo '+(step+1)+' di '+STEPS.length;
@@ -1469,7 +1480,7 @@ function act(e){
   if(a==='exp-json'){expJson();return;}
   if(a==='exp-csv'){expCsv();return;}
   if(a==='imp'){$('#impFile').click();return;}
-  if(a==='reset'){if(confirm('Iniziare un nuovo cantiere? I dati attuali verranno cancellati (salva prima il file .json se ti servono).')){S=blank();step=0;LASTTEST=null;OPEN={};save();render(false);window.scrollTo(0,0);}return;}
+  if(a==='reset'){if(confirm('Iniziare un nuovo cantiere? I dati attuali verranno cancellati (salva prima il file .json se ti servono).')){S=blank();step=0;STEPS=[];buildSteps();LASTTEST=null;OPEN={};save();render(false);window.scrollTo(0,0);}return;}
 }
 function onChange(e){
   const t=e.target;
@@ -1479,6 +1490,7 @@ function onChange(e){
   if(t.dataset&&t.dataset.arr){const p=t.dataset.arr,v=t.dataset.v;let ar=getP(p);if(!Array.isArray(ar)){ar=[];setP(p,ar);}const ix=ar.indexOf(v);if(t.checked&&ix<0)ar.push(v);if(!t.checked&&ix>=0)ar.splice(ix,1);touch();if(t.dataset.rr==='1')render();else live();return;}
   if(!t.dataset||!t.dataset.p)return;
   setP(t.dataset.p,t.type==='checkbox'?t.checked:t.value);
+  if(t.dataset.p==='meta.stima'){buildSteps();LASTTEST=null;}
   if(/^invs\.\d+\.(a|spec\.nmppt)$/.test(t.dataset.p))fixInv(S.invs[+t.dataset.p.split('.')[1]]);
   touch();
   if(t.dataset.rr==='1')render();else live();
@@ -1498,7 +1510,7 @@ function doPrint(){
 function fname(ext){const c=(S.meta.cliente||'impianto').replace(/[^\w\-]+/g,'_').slice(0,30);return 'Huawei_'+c+'_'+new Date().toISOString().slice(0,10)+'.'+ext;}
 function dl(name,text,type){const b=new Blob([text],{type:type||'application/octet-stream'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},500);}
 function rispSummary(){const R=simulate();if(R.err)return null;const r=v=>Math.round(v),pb=payback(battCost(),R.savBatt);return {produzione_kwh:r(R.prod),consumi_kwh:r(R.cons),autosufficienza_solo_fv:+R.asN.toFixed(3),autosufficienza_con_batteria:+R.asB.toFixed(3),risparmio_annuo_eur:R.priced?r(R.savTot):null,risparmio_batteria_eur:R.priced?r(R.savBatt):null,rientro_batteria_anni:R.priced&&ok(pb)?+pb.toFixed(1):null};}
-function expJson(){dl(fname('json'),JSON.stringify({tipo:'huawei-fusionsolar-impianto',versione:1,data:new Date().toISOString(),listino:LISTINO,impianto:S,articoli_aggiunti:CUSTOM,riepilogo:{kwp:+tot().kwp.toFixed(3),kwac:tot().kwac,kwh:tot().kwh,risparmio:rispSummary(),controlli:validate()}},null,1),'application/json');toast('File salvato: allegalo a Claude');}
+function expJson(){dl(fname('json'),JSON.stringify({tipo:'huawei-fusionsolar-impianto',versione:1,data:new Date().toISOString(),listino:LISTINO,impianto:S,articoli_aggiunti:CUSTOM,riepilogo:{kwp:+tot().kwp.toFixed(3),kwac:tot().kwac,kwh:tot().kwh,risparmio:hasRisp()?rispSummary():null,controlli:validate()}},null,1),'application/json');toast('File salvato: allegalo a Claude');}
 function expCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',n=v=>v==null?'':String(v).replace('.',',');
   const rows=[['N° commessa',S.meta.commessa||''],['Cliente',S.meta.cliente||''],[],['Categoria','Marca','Modello / codice','Descrizione','Quantità','U.M.','Incluso','Da prelevare','Prezzo listino €','Totale listino €','Note']].concat(bom().map(r=>[r.cat,r.marca,r.mod,r.d,n(r.q),r.um,n(r.qk),n(r.o),n(r.p),r.p==null?'':n(+(r.p*r.o).toFixed(2)),r.note]));
   dl(fname('csv').replace(/^Huawei_/,'Commessa_'),'﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n')+'\r\n'+q('Prezzi: '+LISTINO+', IVA esclusa'),'text/csv');}
@@ -1506,7 +1518,7 @@ function impFile(f){
   const rd=new FileReader();
   rd.onload=()=>{try{const o=JSON.parse(rd.result);if(!o||!o.impianto||o.tipo!=='huawei-fusionsolar-impianto')throw new Error('non è un file di questa app');
     if(Array.isArray(o.articoli_aggiunti)&&o.articoli_aggiunti.length)mergeCustom(o.articoli_aggiunti);
-    S=migrate(o.impianto);LASTTEST=null;OPEN={};step=0;save();render(false);toast('Impianto caricato');}catch(er){toast('File non valido: '+er.message);}};
+    S=migrate(o.impianto);LASTTEST=null;OPEN={};step=0;STEPS=[];buildSteps();save();render(false);toast('Impianto caricato');}catch(er){toast('File non valido: '+er.message);}};
   rd.readAsText(f);
 }
 /* ===== TOOLTIP DEI GRAFICI ===== */
