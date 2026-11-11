@@ -249,7 +249,13 @@ table.vt td small{color:var(--mut)}
 .jst{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:#eef0f3;color:#444}
 .jst.pronta{background:#e9f1ff;color:#1f5fa8}.jst.caricata{background:#fff1e2;color:#a24a00}.jst.install{background:#fff3dc;color:#8a5a00}
 .jst.collaudo{background:#f1ebff;color:#5a2fa8}.jst.chiusa{background:var(--ok-s);color:var(--ok)}.jst.oggi{background:#e8731a;color:#fff}.jst.aperta{background:#222;color:#fff}
-.jf{align-items:center;margin-bottom:10px}.jf input{flex:1;min-width:180px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}</style><link rel="manifest" href="manifest.webmanifest">
+.jf{align-items:center;margin-bottom:10px}.jf input{flex:1;min-width:180px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
+/* Archivio condiviso */
+.cloudb.ok{color:#1a7f4b!important}.cloudb.warn{color:#8a5a00!important}.cloudb.err{color:#c0262d!important}
+.cbox{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafafb}
+.cbox>summary{color:#d0640c}
+textarea.copyta{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;padding:8px;border:1px solid var(--line);border-radius:8px}
+#dlgJobs textarea{width:100%;min-height:70px;padding:8px 9px;border:1px solid var(--line);border-radius:8px}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icon-180.png">
 <meta name="theme-color" content="#f2f3f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -257,11 +263,11 @@ table.vt td small{color:var(--mut)}
 <meta name="apple-mobile-web-app-title" content="Dati Huawei">
 </head><body>
 <header class="top"><img class="logo" alt="Sun En Go" src="data:image/png;base64,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"><span class="sep">HUAWEI FUSIONSOLAR</span><div class="ttl"><select id="jobSel" class="jobsel" aria-label="Commessa"></select></div>
-<div class="tools"><span id="savest"></span><button class="btn sm ghost" data-act="jobs-open" type="button">Commesse</button><button class="btn sm ghost" data-act="art-open" type="button">Articoli</button><button class="btn sm ghost" data-act="job-new" type="button">+ Nuova commessa</button></div></header>
+<div class="tools"><span id="savest"></span><button class="btn sm ghost cloudb" id="cloudst" data-act="cloud" type="button" hidden></button><button class="btn sm ghost" data-act="jobs-open" type="button">Commesse</button><button class="btn sm ghost" data-act="art-open" type="button">Articoli</button><button class="btn sm ghost" data-act="job-new" type="button">+ Nuova commessa</button></div></header>
 <nav class="steps" id="nav"></nav>
 <main id="app"></main>
 <div class="foot" id="foot"><button class="btn" id="prev" data-act="prev" type="button">← Indietro</button><span class="mid" id="mid"></span><button class="btn pri" id="next" data-act="next" type="button">Avanti →</button></div>
-<div id="print"></div><div id="toast" hidden></div><div id="tip" role="tooltip" hidden></div><dialog id="dlgJobs" class="big"><div id="jobsBody"></div></dialog><dialog id="dlgArt" class="big"><div id="artBody"></div></dialog><input type="file" id="impArt" accept=".json,application/json" hidden>
+<div id="print"></div><div id="toast" hidden></div><div id="tip" role="tooltip" hidden></div><dialog id="dlgLogin"><h3>Accedi all'archivio condiviso</h3><p class="sub" id="lgProj"></p><div class="dlgf"><div class="fld"><label>Email</label><input type="email" id="lgUser" autocomplete="username"></div><div class="fld"><label>Password</label><input type="password" id="lgPass" autocomplete="current-password"></div><div class="msg err" id="lgErr" hidden></div></div><div class="chips" style="justify-content:flex-end"><button class="btn" data-lg="skip" type="button">Continua senza sincronizzare</button><button class="btn pri" data-lg="ok" type="button">Accedi</button></div></dialog><dialog id="dlgJobs" class="big"><div id="jobsBody"></div></dialog><dialog id="dlgArt" class="big"><div id="artBody"></div></dialog><input type="file" id="impArt" accept=".json,application/json" hidden>
 <input type="file" id="impFile" accept=".json,application/json" hidden>
 <script>'use strict';
 /* ===== DATI DI RIFERIMENTO =====
@@ -454,7 +460,7 @@ function custView(a){return Object.assign({},a,{custom:1,g:'Aggiunti da me',ph:a
 function aname(a){if(!a)return '';if(!a.custom)return a.c;return [a.marca,a.d].filter(Boolean).join(' ')||'(articolo senza nome)';}
 function art(c){if(!ARTMAP){ARTMAP=new Map();ALLA=CATALOG.concat(CUSTOM.map(custView));ALLA.forEach(a=>ARTMAP.set(a.c,a));}return ARTMAP.get(c)||null;}
 const allArts=()=>{art('');return ALLA;};
-function saveCustom(){try{localStorage.setItem(CKEY,JSON.stringify(CUSTOM));}catch(e){}ARTMAP=null;}
+function saveCustom(noPush){try{localStorage.setItem(CKEY,JSON.stringify(CUSTOM));}catch(e){}ARTMAP=null;if(!noPush)cloudPushArts();}
 function mergeCustom(list){let n=0;(list||[]).forEach(a=>{if(!a||!a.c||!ATYPES[a.f])return;const i=CUSTOM.findIndex(x=>x.c===a.c);if(i>=0)CUSTOM[i]=a;else CUSTOM.push(a);n++;});saveCustom();return n;}
 // Modulo batteria: dal listino (BMOD) oppure aggiunto da me
 function bmod(c){if(BMOD[c])return BMOD[c];const a=art(c);if(!a||!a.custom||a.f!=='bm')return null;const k=num(a.kwh),w=num(a.kw),nm=aname(a);
@@ -1332,30 +1338,31 @@ function renderArt(){
       return rowCard('art-'+a.c,'A',aname(custView(a)),a.cc||'','',body,'<button type="button" class="btn sm" data-aact="dup" data-i="'+i+'">Duplica</button><button type="button" class="btn sm danger" data-aact="del" data-i="'+i+'">Elimina</button>');
     }).join('');
   }).join('');
+  const ro=cloudOn()&&!isUfficio();
   $('#artBody').innerHTML='<div class="art-head"><h3>Articoli aggiunti da me</h3><button type="button" class="btn sm" data-aact="close">✕ Chiudi</button></div>'+
-    '<p class="sub">Nuovi modelli di moduli fotovoltaici, inverter, batterie, ottimizzatori, dongle o qualsiasi materiale. Compaiono nei menu di tutti i cantieri e nella commessa di magazzino. Restano su questo dispositivo: esportali per passarli ai colleghi.</p>'+
+    (cloudOn()?'<p class="sub">Nuovi modelli di moduli fotovoltaici, inverter, batterie, ottimizzatori, dongle o qualsiasi materiale. Sono condivisi tra tutte le postazioni tramite l\'archivio condiviso.</p>'+(isUfficio()?'':'<div class="msg info">Solo l\'ufficio può aggiungere o modificare gli articoli condivisi.</div>'):'<p class="sub">Nuovi modelli di moduli fotovoltaici, inverter, batterie, ottimizzatori, dongle o qualsiasi materiale. Compaiono nei menu di tutti i cantieri e nella commessa di magazzino. Restano su questo dispositivo: esportali per passarli ai colleghi.</p>')+
     '<div class="addbar"><div class="fld"><label>Tipo di articolo</label><select id="artType">'+optHtml(Object.keys(ATYPES).map(k=>({v:k,l:ATYPES[k]})),ART_T,false)+'</select></div><span></span><button type="button" class="btn pri" data-aact="new">+ Nuovo articolo</button></div>'+
     (CUSTOM.length?groups:'<div class="empty">Nessun articolo aggiunto.</div>')+
     '<div class="chips" style="margin-top:14px"><button type="button" class="btn" data-aact="exp">⬇ Esporta articoli (.json)</button><button type="button" class="btn" data-aact="imp">Importa articoli</button><button type="button" class="btn pri" data-aact="close">Fatto</button></div>';
 }
-function openArt(){renderArt();const d=$('#dlgArt');if(!d.open)d.showModal();}
+function openArt(){renderArt();const d=$('#dlgArt');if(cloudOn()&&!isUfficio())$$('#artBody input,#artBody select,#artBody [data-aact=new],#artBody [data-aact=dup],#artBody [data-aact=del],#artBody [data-aact=imp]').forEach(x=>{x.disabled=true;});if(!d.open)d.showModal();}
 function artAct(e){
   const b=e.target.closest('[data-aact]');if(!b)return;const a=b.dataset.aact,i=+b.dataset.i;
   if(a==='close'){$('#dlgArt').close();return;}
   if(a==='new'){const t=$('#artType').value;ART_T=t;const o={c:'X-'+uid(),f:t,marca:t==='mod'||t==='acc'?'':'Huawei',d:'',cc:'',p:'',note:''};
     if(t==='bm')o.fam='S1';if(t==='opt')o.x='1';if(t==='acc')o.um='pz';if(t==='inv'){o.ph='1';o.bat=['S0','S1'];}
-    CUSTOM.push(o);OPEN['art-'+o.c]=true;saveCustom();renderArt();return;}
-  if(a==='dup'){const o=JSON.parse(JSON.stringify(CUSTOM[i]));o.c='X-'+uid();o.d=(o.d||'')+' (copia)';CUSTOM.splice(i+1,0,o);OPEN['art-'+o.c]=true;saveCustom();renderArt();return;}
-  if(a==='del'){if(!confirm('Eliminare "'+aname(custView(CUSTOM[i]))+'"? Nei cantieri che lo usano comparirà come "articolo non trovato".'))return;CUSTOM.splice(i,1);saveCustom();renderArt();return;}
+    o.upd=new Date().toISOString();CUSTOM.push(o);OPEN['art-'+o.c]=true;saveCustom();renderArt();return;}
+  if(a==='dup'){const o=JSON.parse(JSON.stringify(CUSTOM[i]));o.c='X-'+uid();o.d=(o.d||'')+' (copia)';o.upd=new Date().toISOString();CUSTOM.splice(i+1,0,o);OPEN['art-'+o.c]=true;saveCustom();renderArt();return;}
+  if(a==='del'){if(!confirm('Eliminare "'+aname(custView(CUSTOM[i]))+'"? Nei cantieri che lo usano comparirà come "articolo non trovato".'))return;cloudDelArt(CUSTOM[i].c);CUSTOM.splice(i,1);saveCustom();renderArt();return;}
   if(a==='exp'){dl('Articoli_Huawei_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({tipo:'huawei-fusionsolar-articoli',versione:1,articoli:CUSTOM},null,1),'application/json');return;}
   if(a==='imp'){$('#impArt').click();return;}
 }
 function artChange(e){
   const t=e.target;
   if(t.id==='artType'){ART_T=t.value;return;}
-  if(t.dataset.aarr){if(e.type!=='change')return;const [i,k]=t.dataset.aarr.split('.'),o=CUSTOM[+i];const ar=Array.isArray(o[k])?o[k]:(o[k]=[]);const v=t.dataset.v,ix=ar.indexOf(v);if(t.checked&&ix<0)ar.push(v);if(!t.checked&&ix>=0)ar.splice(ix,1);saveCustom();return;}
+  if(t.dataset.aarr){if(e.type!=='change')return;const [i,k]=t.dataset.aarr.split('.'),o=CUSTOM[+i];const ar=Array.isArray(o[k])?o[k]:(o[k]=[]);const v=t.dataset.v,ix=ar.indexOf(v);if(t.checked&&ix<0)ar.push(v);if(!t.checked&&ix>=0)ar.splice(ix,1);o.upd=new Date().toISOString();saveCustom();return;}
   if(!t.dataset.ap)return;if(e.type==='input'&&(t.tagName==='SELECT'||t.type==='checkbox'))return;
-  const [i,k]=t.dataset.ap.split('.'),o=CUSTOM[+i];o[k]=t.type==='checkbox'?t.checked:t.value;saveCustom();
+  const [i,k]=t.dataset.ap.split('.'),o=CUSTOM[+i];o[k]=t.type==='checkbox'?t.checked:t.value;o.upd=new Date().toISOString();saveCustom();
   const d=t.closest('details.rowc');if(d&&(k==='marca'||k==='d'||k==='cc')){d.querySelector('summary b').textContent=aname(custView(o));d.querySelector('summary .sm2').textContent=o.cc||'';}
 }
 function impArtFile(f){const rd=new FileReader();rd.onload=()=>{try{const o=JSON.parse(rd.result);const L=o&&(o.tipo==='huawei-fusionsolar-articoli'?o.articoli:o.articoli_aggiunti);if(!Array.isArray(L))throw new Error('nessun articolo nel file');
@@ -1683,6 +1690,7 @@ function act(e){
   if(a==='imp'){$('#impFile').click();return;}
   if(a==='job-new'){newJob();return;}
   if(a==='jobs-open'){openJobs();return;}
+  if(a==='cloud'){if(CL.cfg&&!CL.user)openLogin();else openJobs();return;}
   if(a==='job-stato'){setJobStato(S.job.id,b.dataset.v).then(()=>toast('Stato: '+jstato(b.dataset.v)));return;}
   if(a==='job-close'){const e=validate().filter(x=>x.lv==='err').length;if(!confirm((e?'Ci sono '+e+' errori nei controlli. ':'')+'Chiudere la commessa? Resterà nell\'archivio (Commesse → Chiuse).'))return;setJobStato(S.job.id,'chiusa').then(()=>toast('Commessa chiusa e archiviata'));return;}
 }
@@ -1751,7 +1759,7 @@ function jobSumOf(D){
 const jobRec=D=>({id:D.job.id,upd:D.job.upd||'',sum:jobSumOf(D),data:D});
 // Una commessa appena creata e mai compilata non va in archivio
 const isEmptyJob=D=>!(D.meta&&(D.meta.cliente||D.meta.commessa))&&!(D.invs||[]).length&&!(D.batts||[]).length&&!(D.mag||[]).length;
-const storeJob=D=>isEmptyJob(D)?jobDel(D.job.id):jobPut(jobRec(D));
+const storeJob=D=>isEmptyJob(D)?jobDel(D.job.id):jobPut(jobRec(D)).then(()=>cloudPushJob(D));
 const jobSort=(a,b)=>(a.data||'9999').localeCompare(b.data||'9999')||(a.cliente||'').localeCompare(b.cliente||'');
 const jobLabel=j=>(j.cliente||'(nuova commessa)')+(j.comune?' · '+j.comune:'')+(j.data?' · '+fmtD(j.data).slice(0,5):'')+' · '+jstato(j.stato);
 function jobList(){const cur=Object.assign({id:S.job.id},jobSumOf(S));const L=JOBS.filter(j=>j.id!==cur.id);L.push(cur);return L;}
@@ -1775,7 +1783,7 @@ async function newJob(){
 }
 async function setJobStato(id,v){
   if(id===S.job.id){S.job.stato=v;touch();render();await flushJob();await refreshJobs();return;}
-  const r=await jobGet(id);if(!r)return;r.data.job=Object.assign({},r.data.job,{stato:v,upd:new Date().toISOString()});await jobPut(jobRec(r.data));await refreshJobs();
+  const r=await jobGet(id);if(!r)return;r.data.job=Object.assign({},r.data.job,{stato:v,upd:new Date().toISOString()});await storeJob(r.data);await refreshJobs();
 }
 async function exportJobs(all){
   await flushJob();const recs=(await jobAll()).filter(r=>all||(r.data.job||{}).stato!=='chiusa');
@@ -1791,7 +1799,7 @@ async function importData(o){
   await flushJob();let nuove=0,agg=0,old=0,last=null;
   for(const d of list){const D=migrate(d),ex=await jobGet(D.job.id);
     if(ex&&(ex.upd||'')>=(D.job.upd||'')){if(ex.upd!==D.job.upd)old++;last=D.job.id;continue;}
-    if(ex)agg++;else nuove++;await jobPut(jobRec(D));last=D.job.id;}
+    if(ex)agg++;else nuove++;await storeJob(D);last=D.job.id;}
   const cur=await jobGet(S.job.id);if(cur&&(cur.upd||'')>(S.job.upd||'')){S=migrate(cur.data);STEPS=[];buildSteps();save();}
   await refreshJobs();
   const first=isEmptyJob(S)?(JOBS.filter(j=>j.stato!=='chiusa').sort(jobSort)[0]||{}).id:null;
@@ -1809,7 +1817,7 @@ function jobsRows(){
     '<div class="jm">'+esc([j.kwp?f1(j.kwp,2)+' kWp':'',j.inv,j.kwh?'accumulo '+f1(j.kwh,1)+' kWh':''].filter(Boolean).join(' · '))+'</div>'+
     '<div class="ja"><button type="button" class="btn sm pri" data-jact="open" data-id="'+esc(j.id)+'">Apri</button><button type="button" class="btn sm" data-jact="print" data-id="'+esc(j.id)+'">🖨 Commessa magazzino</button>'+
     '<select data-jstato="'+esc(j.id)+'" aria-label="Stato">'+optHtml(JSTATI,j.stato,false)+'</select>'+
-    '<button type="button" class="btn sm" data-jact="dup" data-id="'+esc(j.id)+'">Duplica</button><button type="button" class="btn sm danger" data-jact="del" data-id="'+esc(j.id)+'">Elimina</button></div></div>').join('');
+    '<button type="button" class="btn sm" data-jact="dup" data-id="'+esc(j.id)+'">Duplica</button>'+(cloudOn()&&!isUfficio()?'':'<button type="button" class="btn sm danger" data-jact="del" data-id="'+esc(j.id)+'">Elimina</button>')+'</div></div>').join('');
 }
 function renderJobs(){
   const n=k=>jobList().filter(j=>k==='tutte'||(k==='chiuse'?j.stato==='chiusa':j.stato!=='chiusa')).length;
@@ -1819,13 +1827,16 @@ function renderJobs(){
     '<input type="search" id="jobQ" placeholder="Cerca cliente, comune, squadra…" value="'+esc(JQ)+'"></div>'+
     '<div id="jobList">'+jobsRows()+'</div>'+
     '<div class="chips" style="margin-top:14px"><button type="button" class="btn pri" data-jact="new">+ Nuova commessa</button><button type="button" class="btn" data-jact="exp">⬇ Esporta commesse da fare</button><button type="button" class="btn" data-jact="expall">⬇ Esporta tutte</button><button type="button" class="btn" data-jact="imp">Importa file</button></div>'+
-    '<p class="sub" style="margin-top:10px">Le commesse sono salvate su questo dispositivo. Per passarle a un altro PC o telefono: <b>Esporta</b> qui, invia il file (email, WhatsApp, chiavetta) e sull\'altro dispositivo <b>Importa file</b>. Se la stessa commessa c\'è già, resta la versione modificata per ultima.</p>';
+    (cloudOn()?'<p class="sub" style="margin-top:10px">Le commesse sono condivise tra tutte le postazioni collegate all\'archivio. Esporta e Importa restano disponibili come copia di sicurezza.</p>':
+    '<p class="sub" style="margin-top:10px">Le commesse sono salvate su questo dispositivo. Per passarle a un altro PC o telefono: <b>Esporta</b> qui, invia il file (email, WhatsApp, chiavetta) e sull\'altro dispositivo <b>Importa file</b>. Se la stessa commessa c\'è già, resta la versione modificata per ultima.</p>')+
+    '<div id="cloudBox">'+cloudBox()+'</div>';
 }
 async function openJobs(){await flushJob();await refreshJobs();renderJobs();const d=$('#dlgJobs');if(!d.open)d.showModal();}
 async function jobsAct(e){
   const fb=e.target.closest('[data-jfilt]');if(fb){JFILT=fb.dataset.jfilt;renderJobs();return;}
   const b=e.target.closest('[data-jact]');if(!b)return;const a=b.dataset.jact,id=b.dataset.id,d=$('#dlgJobs');
   if(a==='close'){d.close();return;}
+  if(a&&a.startsWith('cl-')){await cloudAct(a,b);return;}
   if(a==='open'){d.close();await switchJob(id);return;}
   if(a==='print'){d.close();if(id!==S.job.id)await switchJob(id,'mag');printCommessa();return;}
   if(a==='new'){d.close();await newJob();return;}
@@ -1834,11 +1845,164 @@ async function jobsAct(e){
   if(a==='dup'){await flushJob();const r=await jobGet(id);if(!r)return;const D=JSON.parse(JSON.stringify(r.data)),now=new Date().toISOString();
     D.job=Object.assign({},D.job,{id:'J'+uid(),stato:'prep',creato:now,upd:now});D.meta.cliente=(D.meta.cliente||'')+' (copia)';D.meta.commessa='';
     (D.invs||[]).forEach(v=>{v.sn='';});(D.batts||[]).forEach(x=>{x.snpm='';x.snb='';});D.verif={};D.chk={};D.com.sn='';D.met.sn='';
-    await jobPut(jobRec(D));await refreshJobs();toast('Commessa duplicata');return;}
+    await storeJob(D);await refreshJobs();toast('Commessa duplicata');return;}
   if(a==='del'){const j=jobList().find(x=>x.id===id);if(!confirm('Eliminare la commessa "'+((j&&j.cliente)||'senza nome')+'"? Non si può annullare (esporta prima il file se ti serve).'))return;
-    await jobDel(id);if(id===S.job.id){const L=JOBS.filter(x=>x.id!==id&&x.stato!=='chiusa').sort(jobSort);
+    if(cloudOn()&&!isUfficio()){toast('Solo l\'ufficio può eliminare le commesse');return;}
+    await jobDel(id);cloudDelJob(id);if(id===S.job.id){const L=JOBS.filter(x=>x.id!==id&&x.stato!=='chiusa').sort(jobSort);
       S=blank();STEPS=[];buildSteps();if(L.length){const r=await jobGet(L[0].id);if(r)S=migrate(r.data);}STEPS=[];step=0;buildSteps();save();render(false);}
     await refreshJobs();toast('Commessa eliminata');return;}
+}
+/* ===== ARCHIVIO CONDIVISO (Firebase Firestore) =====
+   Tutte le postazioni (PC dell'ufficio, telefoni delle squadre) entrano con email e password e vedono le stesse
+   commesse e gli stessi articoli. Funziona anche senza rete: le modifiche partono appena la rete torna.
+   La configurazione del progetto Firebase si incolla nell'app (Commesse → Archivio condiviso) oppure si scrive qui. */
+const FB_CONFIG=null;   // es. {apiKey:'…',authDomain:'…',projectId:'…',storageBucket:'…',messagingSenderId:'…',appId:'…'}
+const FB_ROLES=null;    // es. {ufficio:['ufficio1@sunengo.it'],squadra:['squadra1@sunengo.it']}
+const FBKEY='huawei_cloud_v1',FBSKIP='huawei_cloud_skip';
+const CL={cfg:null,roles:{ufficio:[],squadra:[]},app:null,auth:null,db:null,user:null,unsub:[],pend:false,offline:false,err:'',first:false,artRemote:{},known:{},q:new Map()};
+const cloudOn=()=>!!(CL.db&&CL.user);
+const lc=a=>(a||[]).map(x=>String(x).trim().toLowerCase()).filter(Boolean);
+function isUfficio(){if(!cloudOn())return true;const u=(CL.user.email||'').toLowerCase();return !CL.roles.ufficio.length||CL.roles.ufficio.includes(u);}
+function cloudSettings(){try{const o=JSON.parse(localStorage.getItem(FBKEY)||'null');if(o&&o.cfg&&o.cfg.projectId)return o;}catch(e){}
+  return FB_CONFIG?{cfg:FB_CONFIG,roles:FB_ROLES||{ufficio:[],squadra:[]}}:null;}
+// Accetta il blocco "const firebaseConfig = {…}" copiato dalla console Firebase oppure il codice di collegamento DH1:…
+function parseCloudInput(txt){
+  txt=String(txt||'').trim();if(!txt)throw new Error('incolla la configurazione');
+  if(/^DH1:/.test(txt)){const o=JSON.parse(decodeURIComponent(escape(atob(txt.slice(4).replace(/\s+/g,'')))));if(!o.cfg||!o.cfg.projectId)throw new Error('codice non valido');return o;}
+  const cfg={};txt.replace(/["']?(apiKey|authDomain|projectId|storageBucket|messagingSenderId|appId|measurementId)["']?\s*:\s*["']([^"']+)["']/g,(m,k,v)=>{cfg[k]=v;return m;});
+  if(!cfg.apiKey||!cfg.projectId||!cfg.appId)throw new Error('mancano apiKey, projectId o appId');
+  return {cfg};
+}
+const cloudCode=st=>'DH1:'+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:st.cfg,roles:st.roles}))));
+// Regole di sicurezza da incollare in Firestore → Regole
+function cloudRules(roles){
+  const u=lc(roles&&roles.ufficio),q=lc(roles&&roles.squadra),all=[...new Set(u.concat(q))],L=a=>'['+a.map(x=>"'"+x.replace(/'/g,'')+"'").join(', ')+']';
+  return "rules_version = '2';\n// Regole dell'archivio condiviso Dati Huawei (generate dall'app). Ufficio: tutto. Squadre: leggono e aggiornano le commesse.\nservice cloud.firestore {\n  match /databases/{database}/documents {\n"+
+    "    function staff() { return request.auth != null"+(all.length?" && request.auth.token.email in "+L(all):"")+"; }\n"+
+    "    function ufficio() { return request.auth != null"+(u.length?" && request.auth.token.email in "+L(u):"")+"; }\n"+
+    "    // Si accetta solo una versione uguale o più recente di quella salvata (upd = data dell'ultima modifica)\n"+
+    "    match /commesse/{id} {\n      allow read: if staff();\n      allow create: if staff() && (ufficio() || request.resource.data.del == false);\n      allow update: if staff() && (ufficio() || request.resource.data.del == false) && request.resource.data.upd >= resource.data.upd;\n      allow delete: if ufficio();\n    }\n"+
+    "    match /articoli/{id} {\n      allow read: if staff();\n      allow create: if ufficio();\n      allow update: if ufficio() && request.resource.data.upd >= resource.data.upd;\n      allow delete: if ufficio();\n    }\n  }\n}\n";
+}
+function loadFB(){if(window.FB)return Promise.resolve();if(loadFB.p)return loadFB.p;
+  loadFB.p=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='vendor/firebase.js';sc.onload=()=>window.FB?res():rej(new Error('libreria Firebase non valida'));sc.onerror=()=>{loadFB.p=null;rej(new Error('libreria Firebase non caricata'));};document.head.appendChild(sc);});
+  return loadFB.p;}
+async function cloudStart(){
+  const st=cloudSettings();if(!st){cloudBadge();return;}
+  CL.cfg=st.cfg;CL.roles={ufficio:lc(st.roles&&st.roles.ufficio),squadra:lc(st.roles&&st.roles.squadra)};
+  try{await loadFB();
+    if(!CL.app){
+      CL.app=FB.initializeApp(CL.cfg,'dati-huawei');
+      CL.auth=FB.initializeAuth(CL.app,{persistence:[FB.indexedDBLocalPersistence,FB.browserLocalPersistence]});
+      CL.db=null;CL.dbx=FB.initializeFirestore(CL.app,{localCache:FB.persistentLocalCache({tabManager:FB.persistentMultipleTabManager()})});
+      const emu=localStorage.getItem('huawei_fbemu');
+      if(emu){FB.connectAuthEmulator(CL.auth,'http://'+emu+':9099',{disableWarnings:true});FB.connectFirestoreEmulator(CL.dbx,emu,8080);}
+      FB.onAuthStateChanged(CL.auth,u=>{CL.user=u||null;if(u)cloudOnLogin();else cloudOnLogout();});
+    }
+  }catch(e){CL.err=errMsg(e);cloudBadge();}
+}
+function cloudOnLogout(){CL.unsub.forEach(f=>{try{f();}catch(e){}});CL.unsub=[];CL.db=null;CL.first=false;cloudBadge();
+  if(!sessionStorage.getItem(FBSKIP))openLogin();renderJobSel();}
+function cloudOnLogin(){
+  CL.db=CL.dbx;CL.err='';CL.first=false;try{sessionStorage.removeItem(FBSKIP);}catch(e){}
+  const dl=$('#dlgLogin');if(dl.open)dl.close();
+  CL.unsub.push(FB.onSnapshot(FB.collection(CL.db,'commesse'),{includeMetadataChanges:true},sn=>{cloudJobsSnap(sn).catch(e=>cloudErr(e));},cloudErr));
+  CL.unsub.push(FB.onSnapshot(FB.collection(CL.db,'articoli'),{includeMetadataChanges:true},cloudArtSnap,cloudErr));
+  cloudBadge();toast('Archivio condiviso: '+CL.user.email);
+}
+const isDenied=e=>(e&&e.code)==='permission-denied'||/permission|insufficient/i.test(errMsg(e));
+function cloudErr(e){CL.err=isDenied(e)?'accesso negato: account non autorizzato o regole non pubblicate':errMsg(e);cloudBadge();}
+async function cloudJobsSnap(sn){
+  CL.pendJ=sn.metadata.hasPendingWrites;CL.offline=sn.metadata.fromCache;
+  const remote=new Map();sn.docs.forEach(d=>{const x=d.data();remote.set(d.id,x);if(!d.metadata.hasPendingWrites&&(x.upd||'')>(CL.known[d.id]||''))CL.known[d.id]=x.upd||'';});
+  if(!CL.first){CL.first=true;await flushJob();
+    for(const r of await jobAll()){const x=remote.get(r.id);if(!x||(!x.del&&(x.upd||'')<(r.upd||'')))cloudPushJob(r.data);}}
+  let cur=null,changed=false;
+  for(const ch of sn.docChanges()){
+    if(ch.type==='removed'||ch.doc.metadata.hasPendingWrites)continue;
+    const x=ch.doc.data(),id=ch.doc.id,loc=await jobGet(id);
+    if(x.del){if(loc){await jobDel(id);changed=true;if(id===S.job.id)cur='del';}continue;}
+    if(loc&&(loc.upd||'')>=(x.upd||''))continue;
+    let D;try{D=migrate(JSON.parse(x.json));}catch(e){continue;}
+    await jobPut(jobRec(D));changed=true;if(id===S.job.id)cur={D,by:x.by};
+  }
+  if(cur==='del'){const L=JOBS.filter(j=>j.id!==S.job.id&&j.stato!=='chiusa').sort(jobSort);S=blank();if(L.length){const r=await jobGet(L[0].id);if(r)S=migrate(r.data);}
+    STEPS=[];step=0;buildSteps();save();render(false);toast('La commessa aperta è stata eliminata dall\'ufficio');}
+  else if(cur&&(S.job.upd||'')<(cur.D.job.upd||'')){const sid=STEPS[step]&&STEPS[step].id;S=cur.D;STEPS=[];buildSteps();const k=SI(sid);step=k>=0?k:0;
+    try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}render();toast('Commessa aggiornata da '+(cur.by||'un\'altra postazione'));}
+  if(changed)await refreshJobs();cloudBadge();
+}
+function cloudArtSnap(sn){
+  CL.pendA=sn.metadata.hasPendingWrites;let ch=false;
+  sn.docChanges().forEach(c=>{if(c.type==='removed'||c.doc.metadata.hasPendingWrites)return;const x=c.doc.data(),id=c.doc.id;CL.artRemote[id]=x.upd||'';
+    const i=CUSTOM.findIndex(a=>a.c===id);
+    if(x.del){if(i>=0){CUSTOM.splice(i,1);ch=true;}return;}
+    if(i>=0&&(CUSTOM[i].upd||'')>=(x.upd||''))return;
+    let a;try{a=JSON.parse(x.json);}catch(e){return;}if(!a||!ATYPES[a.f])return;
+    if(i>=0)CUSTOM[i]=a;else CUSTOM.push(a);ch=true;});
+  if(!CL.firstA){CL.firstA=true;cloudPushArts();}
+  if(ch){saveCustom(true);if($('#dlgArt').open)openArt();else render();}
+  cloudBadge();
+}
+// Invia solo se la commessa è più recente dell'ultima versione nota nell'archivio (aprirla non basta)
+function cloudPushJob(D){if(!cloudOn()||!D||!D.job||isEmptyJob(D)||(CL.known[D.job.id]||'')>=(D.job.upd||''))return;CL.q.set(D.job.id,D);clearTimeout(cloudPushJob.t);cloudPushJob.t=setTimeout(cloudFlush,1200);cloudBadge();}
+function cloudFlush(){if(!cloudOn())return;const by=CL.user.email;
+  CL.q.forEach((D,id)=>{CL.known[id]=D.job.upd||'';FB.setDoc(FB.doc(CL.db,'commesse',id),{upd:D.job.upd||'',by,del:false,sum:jobSumOf(D),json:JSON.stringify(D),ts:FB.serverTimestamp()}).catch(cloudWriteErr);});
+  CL.q.clear();cloudBadge();}
+function cloudDelJob(id){if(!cloudOn())return;CL.q.delete(id);const u=new Date().toISOString();CL.known[id]=u;FB.setDoc(FB.doc(CL.db,'commesse',id),{upd:u,by:CL.user.email,del:true,sum:{},json:'',ts:FB.serverTimestamp()}).catch(cloudErr);}
+// Una scrittura respinta mentre la lettura funziona = nel frattempo un'altra postazione ha salvato una versione più recente
+function cloudWriteErr(e){if(isDenied(e)&&CL.user&&!CL.err){toast('Una modifica non è stata inviata: nel frattempo la commessa è stata aggiornata da un\'altra postazione');return;}cloudErr(e);}
+function cloudPushArts(){if(!cloudOn()||!isUfficio())return;
+  CUSTOM.forEach(a=>{if(!a.upd)a.upd=new Date(0).toISOString();if((CL.artRemote[a.c]||'')>=a.upd)return;CL.artRemote[a.c]=a.upd;
+    FB.setDoc(FB.doc(CL.db,'articoli',a.c),{upd:a.upd,by:CL.user.email,del:false,json:JSON.stringify(a),ts:FB.serverTimestamp()}).catch(cloudWriteErr);});}
+function cloudDelArt(c){if(!cloudOn()||!isUfficio())return;const u=new Date().toISOString();CL.artRemote[c]=u;FB.setDoc(FB.doc(CL.db,'articoli',c),{upd:u,by:CL.user.email,del:true,json:'',ts:FB.serverTimestamp()}).catch(cloudErr);}
+function cloudState(){
+  if(!CL.cfg)return null;if(CL.err)return {cls:'err',t:'⚠ Archivio: '+CL.err};
+  if(!CL.user)return {cls:'warn',t:'☁ Accedi all\'archivio'};
+  const pend=CL.q.size||CL.pendJ||CL.pendA;
+  if(CL.offline)return {cls:'warn',t:'☁ Senza rete'+(pend?' · modifiche in attesa':'')};
+  return pend?{cls:'warn',t:'☁ Invio in corso…'}:{cls:'ok',t:'☁ '+CL.user.email.split('@')[0]+' · sincronizzato'};
+}
+function cloudBadge(){const b=$('#cloudst');if(!b)return;const s0=cloudState();b.hidden=!s0;if(s0){b.textContent=s0.t;b.className='btn sm ghost cloudb '+s0.cls;}
+  const box=$('#cloudBox');if(box&&$('#dlgJobs').open)box.innerHTML=cloudBox();}
+function cloudBox(){
+  const st=cloudSettings();
+  if(!st)return '<details class="adv cbox"><summary>☁ Archivio condiviso tra PC e telefoni (Firebase)</summary>'+
+    '<p class="sub">Incolla il blocco <b>firebaseConfig</b> copiato dalla console Firebase (passo 2 della guida) oppure il <b>codice di collegamento</b> preso da una postazione già collegata.</p>'+
+    '<div class="fld"><label>Configurazione o codice di collegamento</label><textarea id="clIn" placeholder="const firebaseConfig = { apiKey: &quot;…&quot;, … };"></textarea></div>'+
+    '<div class="grid" style="margin-top:8px"><div class="fld"><label>Email ufficio (una per riga)</label><textarea id="clU" placeholder="ufficio1@sunengo.it"></textarea></div>'+
+    '<div class="fld"><label>Email squadre (una per riga)</label><textarea id="clQ" placeholder="squadra1@sunengo.it"></textarea></div></div>'+
+    '<p class="sub">Le email servono per le regole di sicurezza e per i permessi: l\'ufficio può tutto, le squadre aggiornano le commesse ma non le eliminano e non modificano gli articoli. Non servono con il codice di collegamento.</p>'+
+    '<button type="button" class="btn pri" data-jact="cl-save">Collega questo dispositivo</button></details>';
+  const s0=cloudState()||{cls:'',t:''};
+  return '<details class="adv cbox" open><summary>☁ Archivio condiviso · progetto '+esc(st.cfg.projectId)+'</summary>'+
+    '<div class="msg '+(s0.cls==='ok'?'ok':s0.cls==='err'?'err':'warn')+'">'+esc(s0.t)+(CL.user?' · '+esc(CL.user.email)+' ('+(isUfficio()?'ufficio':'squadra')+')':'')+'</div>'+
+    '<div class="chips"><button type="button" class="btn" data-jact="cl-code">Codice di collegamento per un\'altra postazione</button><button type="button" class="btn" data-jact="cl-rules">Regole di sicurezza da incollare in Firebase</button>'+
+    (CL.user?'<button type="button" class="btn" data-jact="cl-out">Esci</button>':'<button type="button" class="btn pri" data-jact="cl-in">Accedi</button>')+
+    '<button type="button" class="btn danger" data-jact="cl-off">Scollega questo dispositivo</button></div><div id="clOut"></div></details>';
+}
+function showCopy(title,txt,help){$('#clOut').innerHTML='<div class="fld" style="margin-top:10px"><label>'+esc(title)+'</label><textarea readonly class="copyta">'+esc(txt)+'</textarea></div><p class="sub">'+help+'</p>';
+  const ta=$('#clOut textarea');ta.focus();ta.select();try{navigator.clipboard.writeText(txt).then(()=>toast('Copiato negli appunti'),()=>{});}catch(e){}}
+async function cloudAct(a){
+  if(a==='cl-save'){try{const o=parseCloudInput($('#clIn').value);if(!o.roles)o.roles={ufficio:lc($('#clU').value.split(/[\s,;]+/)),squadra:lc($('#clQ').value.split(/[\s,;]+/))};
+      localStorage.setItem(FBKEY,JSON.stringify(o));try{sessionStorage.removeItem(FBSKIP);}catch(e){}toast('Configurazione salvata: accedi');$('#dlgJobs').close();await cloudStart();if(!CL.user)openLogin();}
+    catch(e){toast('Configurazione non valida: '+errMsg(e));}return;}
+  if(a==='cl-code'){showCopy('Codice di collegamento',cloudCode(cloudSettings()),'Sulle altre postazioni: Commesse → Archivio condiviso → incolla questo codice → Collega questo dispositivo. Poi ognuno accede con la propria email e password.');return;}
+  if(a==='cl-rules'){showCopy('Regole di sicurezza',cloudRules(cloudSettings().roles),'Console Firebase → Firestore Database → scheda <b>Regole</b>: sostituisci tutto il testo con questo e premi <b>Pubblica</b>. Rifallo se cambiano le email.');return;}
+  if(a==='cl-in'){$('#dlgJobs').close();openLogin();return;}
+  if(a==='cl-out'){if(!confirm('Uscire dall\'archivio condiviso su questo dispositivo? Le commesse restano salvate qui.'))return;try{sessionStorage.setItem(FBSKIP,'1');}catch(e){}await FB.signOut(CL.auth);renderJobs();return;}
+  if(a==='cl-off'){if(!confirm('Scollegare questo dispositivo dall\'archivio condiviso? Le commesse restano salvate qui, ma non si sincronizzano più.'))return;
+    try{if(CL.auth)await FB.signOut(CL.auth);}catch(e){}localStorage.removeItem(FBKEY);location.reload();return;}
+}
+function openLogin(){const d=$('#dlgLogin');if(d.open||!CL.auth)return;$('#lgProj').textContent='Progetto '+CL.cfg.projectId+'. Ogni postazione entra con la propria email e password (create nella console Firebase).';
+  $('#lgErr').hidden=true;$('#lgPass').value='';d.showModal();setTimeout(()=>$('#lgUser').focus(),50);}
+async function loginAct(e){
+  const b=e.target.closest('[data-lg]');if(!b)return;const d=$('#dlgLogin');
+  if(b.dataset.lg==='skip'){try{sessionStorage.setItem(FBSKIP,'1');}catch(_){}d.close();toast('Lavori solo su questo dispositivo: le modifiche non si sincronizzano');return;}
+  const u=$('#lgUser').value.trim(),pw=$('#lgPass').value;if(!u||!pw){$('#lgErr').hidden=false;$('#lgErr').textContent='Scrivi email e password';return;}
+  b.disabled=true;try{await FB.signInWithEmailAndPassword(CL.auth,u,pw);}
+  catch(er){const m=errMsg(er);$('#lgErr').hidden=false;$('#lgErr').textContent=/invalid-credential|wrong-password|user-not-found|invalid-email/.test(m)?'Email o password non corrette':(/network/.test(m)?'Nessuna connessione: riprova quando c\'è rete, oppure continua senza sincronizzare':m);}
+  finally{b.disabled=false;}
 }
 /* ===== TOOLTIP DEI GRAFICI ===== */
 function showTip(el){const t=$('#tip');t.innerHTML=esc(el.dataset.tip).replace(/ · /g,'<br>');t.hidden=false;
@@ -1873,6 +2037,9 @@ function init(){
   $('#jobSel').addEventListener('change',e=>{const v=e.target.value;if(v==='__all'){renderJobSel();openJobs();}else switchJob(v);});
   render(false);
   storeJob(S).catch(()=>{}).then(refreshJobs);
+  $('#dlgLogin').addEventListener('click',loginAct);
+  $('#lgPass').addEventListener('keydown',e=>{if(e.key==='Enter')loginAct({target:$('[data-lg="ok"]')});});
+  cloudStart();
 }
 document.addEventListener('DOMContentLoaded',init);
 </script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())){navigator.serviceWorker.register('sw.js');}</script>

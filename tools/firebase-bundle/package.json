@@ -1,0 +1,8 @@
+{
+  "name": "dati-huawei-firebase-bundle",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pacchetto locale di Firebase (app, auth, firestore) per huawei/vendor/firebase.js",
+  "scripts": { "build": "esbuild entry.js --bundle --minify --format=iife --global-name=FB --target=es2019 --legal-comments=eof --outfile=../../huawei/vendor/firebase.js" },
+  "devDependencies": { "esbuild": "0.24.0", "firebase": "10.14.1" }
+}

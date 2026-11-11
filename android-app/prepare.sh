@@ -8,6 +8,7 @@ VERSION_CODE="${VERSION_CODE:-1}"
 # 1. Pagina web: la stessa app pubblicata su GitHub Pages
 rm -rf www && mkdir -p www
 cp ../huawei/index.html www/index.html
+cp -r ../huawei/vendor www/vendor
 cp ../icon-180.png ../icon-192.png ../icon-512.png www/
 
 # 2. Progetto Android generato da Capacitor (non salvato nel repository)

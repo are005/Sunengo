@@ -13,6 +13,9 @@ Gli aggiornamenti si installano sopra la versione precedente senza disinstallare
 
 **Le commesse salvate nel browser o su un altro dispositivo non passano da sole nell'app** (ogni dispositivo ha il suo archivio): in **Commesse** usa **Esporta** sul dispositivo di partenza e **Importa file** su quello di arrivo. Se una commessa c'è già, resta la versione modificata per ultima. Gli articoli viaggiano insieme alle commesse (oppure: finestra Articoli → Esporta/Importa).
 
+## Archivio condiviso (Firebase)
+Con l'archivio condiviso PC e telefoni vedono le stesse commesse e gli stessi articoli, anche senza rete (le modifiche partono quando la rete torna). Si attiva da **Commesse → Archivio condiviso**: sulla prima postazione si incolla la configurazione del progetto Firebase e le email di ufficio e squadre; sulle altre si incolla il **codice di collegamento**. Ogni postazione entra con la propria email e password. Le **regole di sicurezza** da pubblicare in Firestore si copiano dallo stesso pannello.
+
 ## Usare la verifica in cantiere
 1. Collega il telefono al Wi-Fi dell'inverter (rete `SUN2000-…`). Se Android avvisa che la rete non ha Internet, scegli di restare connesso.
 2. Apri il passo **Verifica inverter** e premi **Leggi dall'inverter**.
