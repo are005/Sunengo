@@ -1,0 +1,11 @@
+{
+  "name": "dati-huawei-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "App Android Dati Huawei: la web app huawei/ con lettura dell'inverter via Wi-Fi (sola lettura)",
+  "dependencies": {
+    "@capacitor/android": "6.2.3",
+    "@capacitor/cli": "6.2.3",
+    "@capacitor/core": "6.2.3"
+  }
+}

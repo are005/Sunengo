@@ -231,7 +231,13 @@ table.cm td small{color:var(--mut)}
   #print .snl{border-bottom:1px solid #999;height:15px;margin-top:3px;font-size:7.5pt;color:#888}
   #print .firme{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:28px}
   #print .firme div{border-top:1px solid #333;padding-top:3px;font-size:9pt;color:#444}
-}</style><link rel="manifest" href="manifest.webmanifest">
+}
+/* Verifica inverter */
+table.vt tr.diff td{background:var(--err-s)}table.vt tr.err td{background:var(--warn-s)}
+table.vt td small{color:var(--mut)}
+.vs{display:inline-block;font-weight:700;font-size:12px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.vs.ok{background:var(--ok-s);color:var(--ok)}.vs.err{background:var(--err-s);color:var(--err)}.vs.warn{background:var(--warn-s);color:var(--warn)}.vs.info{background:#eef0f3;color:#555}
+@media print{table.vt tr td,.vs{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style><link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icon-180.png">
 <meta name="theme-color" content="#f2f3f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -364,7 +370,7 @@ const f1=(n,d)=>ok(n)?n.toLocaleString('it-IT',{maximumFractionDigits:d==null?1:
 const ALLSTEPS=[
   {id:'cantiere',t:'Cantiere'},{id:'inverter',t:'Inverter'},{id:'stringhe',t:'Moduli e stringhe'},
   {id:'batterie',t:'Batterie e backup'},{id:'meter',t:'Comunicazione e meter'},{id:'mag',t:'Materiali e magazzino'},
-  {id:'prog',t:'Programmazione batteria'},{id:'risp',t:'Stima risparmio',opt:1},{id:'fusion',t:'FusionSolar'},{id:'test',t:'Collaudo e documenti'}
+  {id:'prog',t:'Programmazione batteria'},{id:'risp',t:'Stima risparmio',opt:1},{id:'fusion',t:'FusionSolar'},{id:'verif',t:'Verifica inverter'},{id:'test',t:'Collaudo e documenti'}
 ];
 let STEPS=[];
 // La stima del risparmio si vede (passo e stampa) solo se spuntata al passo 1
@@ -386,11 +392,12 @@ function blank(){
     fs:{nome:'',server:OPT.server[0],azienda:'',inst:'',owner:'',ownernome:'',dataconn:'',fuso:'Europe/Rome (UTC+01:00)',valuta:'EUR',tariffa:OPT.fstar[0],pacq:'',pf1:'',pf2:'',pf3:'',pven:''},
     risp:{cons:'',prof:'sera',stag:'flat',zona:'Centro',resa:'',costo:'',detr:'',mese:'6',giorno:'serena',gs:'3'},
     mag:[],magi:{data:'',prep:'',mezzo:'',note:''},
+    vconn:{inv:'',mode:'ap',host:'192.168.200.1',port:'6607',unit:'0'},verif:{},
     chk:{},notes:''};
 }
 function migrate(d){
   const b=blank(),o=Object.assign({},b,d||{});
-  ['meta','rete','sito','bk','com','met','bp','fs','risp','magi','chk'].forEach(k=>{o[k]=Object.assign({},b[k],(d&&d[k])||{});});
+  ['meta','rete','sito','bk','com','met','bp','fs','risp','magi','vconn','verif','chk'].forEach(k=>{o[k]=Object.assign({},b[k],(d&&d[k])||{});});
   ['mods','invs','batts','acc','tou','mag'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});
   if(!o.mods.length)o.mods=[newMod()];
   o.invs.forEach(v=>fixInv(v,o));
@@ -1054,6 +1061,7 @@ const CHK=[
   {k:'own',t:'Proprietario invitato: vede l\'impianto dalla sua app'},
   {k:'fw',t:'Firmware di inverter, dongle / EMMA e batterie aggiornati'},
   {g:'Documenti',k:'dico',t:'Dichiarazione di conformità (DM 37/08) e manuali consegnati al cliente'},
+  {k:'ver',t:'Programmazione verificata con l\'app Android: nessuna differenza dal progetto',c:()=>S.batts.length>0||!!S.met.pac},
   {k:'gaudi',t:'Dati per GAUDÌ e regolamento di esercizio raccolti (seriali, potenze, report test IPS)'}
 ];
 const chkOn=()=>CHK.filter(x=>!x.c||x.c());
@@ -1183,6 +1191,8 @@ function validate(){
   if(S.invs.length&&!S.meta.commessa)add('info','mag','Indica il numero di commessa per la stampa di magazzino.');
   // 7 Stima risparmio
   if(hasRisp()&&S.invs.length&&!(num(S.risp.cons)>0))add('info','risp','Inserisci i consumi annui del cliente per stimare il risparmio.');
+  // Verifica inverter
+  S.invs.forEach((v,i)=>{const r=verifRec(v);if(!r||r.fail)return;const d=verifRows(v,r).filter(x=>x.st==='diff').length;if(d)add('warn','verif','I'+(i+1)+': la lettura dall\'inverter ha trovato '+d+(d>1?' parametri diversi':' parametro diverso')+' dal progetto.');});
   // 8 FusionSolar
   if(S.invs.length){
     if(!fsNome())add('warn','fusion','Dai un nome all\'impianto su FusionSolar.');
@@ -1253,7 +1263,11 @@ function commessaDoc(standalone){
     (mg.note?'<p><b>Note per il magazzino:</b> '+esc(mg.note)+'</p>':'')+
     '<div class="firme"><div>Preparato da</div><div>Controllato / caricato da</div><div>Data e ora</div></div>';
 }
-function printCommessa(){$('#print').innerHTML=commessaDoc(true);setTimeout(()=>window.print(),50);}
+function printCommessa(){$('#print').innerHTML=commessaDoc(true);setTimeout(runPrint,50);}
+// Nel browser: stampa normale. Nell'app Android: stampa di sistema (anche "Salva come PDF")
+function runPrint(){if(!isNative()){window.print();return;}
+  const html='<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">'+$$('style').map(x=>x.outerHTML).join('')+'</head><body>'+$('#print').outerHTML+'</body></html>';
+  nat('print',{html,name:'Dati Huawei - '+(S.meta.cliente||'impianto')}).catch(e=>toast(errMsg(e)));}
 function magOpts(){
   const g={};allArts().filter(a=>a.c!==CUSTOM_INV&&a.c!=='ALTRO').forEach(a=>{const c=catOf(a);(g[c]=g[c]||[]).push(a);});
   const ord=Object.keys(g).sort((x,y)=>{const i=CATORD.indexOf(x),j=CATORD.indexOf(y);return (i<0?99:i)-(j<0?99:j)||x.localeCompare(y);});
@@ -1397,8 +1411,168 @@ const DOCS=[
   {id:'chk',t:'Checklist di collaudo',s:'Da spuntare in cantiere',fn:()=>'<h2>Checklist di collaudo</h2>'+tbl(['Fatto','Verifica'],chkOn().map(x=>[S.chk[x.k]?'☑':'☐',esc(x.t)]))},
   {id:'mag',t:'Commessa magazzino',s:'Materiali da caricare',fn:()=>commessaDoc(false)},
   {id:'bom',t:'Distinta materiali',s:'Marca, modello, quantità',fn:()=>'<h2>Distinta materiali</h2>'+tbl(['Categoria','Marca','Modello / codice','Descrizione','Totale','U.M.','Incluso','Da ordinare'],bom().map(r=>[esc(r.cat),esc(r.marca),esc(r.mod),esc(r.d),fq(r.q),esc(r.um),r.qk?fq(r.qk):'',fq(r.o)]))},
+  {id:'verif',t:'Verifica inverter',s:'Lettura con l\'app Android',fn:verifDoc},
   {id:'test',t:'Esito test e descrizione',s:'Riepilogo per Claude',fn:()=>'<h2>Esito del test</h2>'+runTest().html.replace(/<button[^>]*>.*?<\/button>/g,'')}
 ];
+/* ===== VERIFICA INVERTER (sola lettura, solo nell'app Android) =====
+   L'app legge i parametri dall'inverter via Modbus TCP e li confronta con il progetto. Non scrive nulla.
+   Mappa dei registri Huawei SUN2000/LUNA2000 (documento Huawei "Solar Inverter Modbus Interface Definitions" e
+   librerie open source che lo usano). DA CONFERMARE sul documento ufficiale per ogni modello: si corregge qui.
+   [chiave, etichetta, registro, n° registri, tipo, divisore, unità, gruppo] */
+const REGS=[
+  ['model','Modello',30000,15,'str',1,'','info'],['sn','Numero di serie',30015,10,'str',1,'','info'],
+  ['pn','Potenza nominale',30073,2,'u32',1000,'kW','info'],['bcap','Capacità batterie',37758,2,'u32',1000,'kWh','info'],
+  ['pvp','Potenza FV in ingresso',32064,2,'i32',1000,'kW','live'],['acp','Potenza AC in uscita',32080,2,'i32',1000,'kW','live'],
+  ['bsoc','SOC batterie',37760,1,'u16',10,'%','live'],['bpw','Potenza batterie (+ carica, − scarica)',37765,2,'i32',1000,'kW','live'],
+  ['mst','Stato meter',37100,1,'u16',1,'','live'],['mpw','Potenza al meter (+ immissione, − prelievo)',37113,2,'i32',1000,'kW','live'],
+  ['mode','Modalità batteria',47086,1,'u16',1,'','prog'],['pch','Potenza max di carica',47075,2,'u32',1000,'kW','prog'],
+  ['pdis','Potenza max di scarica',47077,2,'u32',1000,'kW','prog'],['socmax','SOC di fine carica',47081,1,'u16',10,'%','prog'],
+  ['socmin','SOC di fine scarica',47082,1,'u16',10,'%','prog'],['grid','Carica dalla rete',47087,1,'u16',1,'','prog'],
+  ['gridsoc','SOC di fine carica dalla rete',47088,1,'u16',10,'%','prog'],['gridp','Potenza max di carica dalla rete',47242,2,'u32',1000,'kW','prog'],
+  ['socbk','SOC di backup',47102,1,'u16',10,'%','prog'],['excess','Energia FV in eccesso (TOU)',47299,1,'u16',1,'','prog'],
+  ['tou','Fasce orarie TOU',47255,43,'tou',1,'','prog'],['pac','Controllo potenza attiva',47415,1,'u16',1,'','prog'],
+  ['plimw','Limite di immissione (kW)',47416,2,'i32',1000,'kW','prog'],['plimp','Limite di immissione (%)',47418,1,'i16',10,'%','prog']
+];
+const MODE_CODE={msc:2,tou:5,ffg:4},MODE_L={0:'Adattiva',1:'Carica/scarica fissa',2:'Massimo autoconsumo',3:'Fasce orarie (batterie LG)',4:'Immissione totale in rete',5:'Fasce orarie TOU'};
+const PAC_CODE={unl:0,zero:5,kw:6,pc:7},PAC_L={0:'Illimitata',5:'Immissione zero',6:'Limitata in kW',7:'Limitata in %'};
+const MBEX={1:'funzione non supportata',2:'registro non disponibile su questo modello',3:'valore non valido',4:'errore interno dell\'inverter',6:'inverter occupato'};
+const VCONN={ap:{host:'192.168.200.1',port:'6607',unit:'0'},dongle:{host:'',port:'502',unit:'1'}};
+const isNative=()=>!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==='function'&&window.Capacitor.isNativePlatform());
+const nat=(m,o)=>window.Capacitor.nativePromise('TcpModbus',m,o||{});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const b64e=a=>{let s='';for(const x of a)s+=String.fromCharCode(x);return btoa(s);};
+const b64d=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+const errMsg=e=>(e&&(e.message||e.errorMessage))||String(e);
+const MB={tid:0,unit:0};
+// Lettura di registri (funzione Modbus 03)
+async function mbRead(addr,n){
+  const tid=MB.tid=(MB.tid%65535)+1;
+  const r=b64d((await nat('transact',{data:b64e([tid>>8,tid&255,0,0,0,6,MB.unit,3,addr>>8,addr&255,n>>8,n&255]),timeout:5000})).data);
+  if(r.length<9)throw new Error('risposta troppo corta');
+  if(((r[0]<<8)|r[1])!==tid)throw new Error('risposta fuori sequenza');
+  if(r[7]&0x80)throw new Error(MBEX[r[8]]||'eccezione Modbus '+r[8]);
+  const w=[];for(let i=0;i<r[8]/2;i++)w.push((r[9+2*i]<<8)|r[10+2*i]);
+  if(w.length<n)throw new Error('dati incompleti');
+  return w;
+}
+const hhmm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+// Fasce TOU LUNA2000: numero fasce, poi 3 registri per fascia (inizio min, fine min, [carica 0 / scarica 1]<<8 | giorni dom..sab)
+function touDecode(w){const n=w[0];if(n>14)return {err:'numero di fasce non valido ('+n+')'};const seg=[];
+  for(let i=0;i<n;i++){const a=w[1+3*i],b=w[2+3*i],f=w[3+3*i],g=[];for(let k=1;k<=6;k++)if(f&(1<<k))g.push(String(k));if(f&1)g.push('7');seg.push({da:hhmm(a),a:hhmm(b),az:(f>>8)===1?'d':'c',g});}
+  return {seg};}
+function regDecode(w,type,gain){
+  if(type==='str'){let t='';w.forEach(x=>{t+=String.fromCharCode(x>>8,x&255);});return t.replace(/\0[\s\S]*$/,'').trim();}
+  if(type==='tou')return touDecode(w);
+  const v=type==='u16'?w[0]:type==='i16'?(w[0]<<16>>16):type==='u32'?w[0]*65536+w[1]:((w[0]<<16)|w[1]);
+  return gain>1?v/gain:v;
+}
+let VBUSY=false;
+function vprog(t){const e=$('#vprog');if(e)e.textContent=t;}
+async function verifRun(){
+  if(VBUSY)return;if(!isNative()){toast('La lettura funziona solo nell\'app Android');return;}
+  const v=S.invs.find(x=>x.id===S.vconn.inv)||S.invs[0];if(!v){toast('Aggiungi prima l\'inverter (passo 2)');return;}
+  const c=S.vconn,host=(c.host||'').trim();if(!host){toast('Scrivi l\'indirizzo IP');return;}
+  const tries=[[+c.port||502,+c.unit||0]];
+  if(c.mode==='ap')[[6607,0],[6607,1],[502,0],[502,1]].forEach(x=>{if(!tries.some(y=>y[0]===x[0]&&y[1]===x[1]))tries.push(x);});
+  VBUSY=true;const btn=$('[data-act="verif-run"]');if(btn)btn.disabled=true;
+  const rec={t:new Date().toISOString(),conn:null,vals:{},errs:{},ver:1};let first=null,last='';
+  const open=async(port)=>{try{await nat('close');}catch(_){}await nat('open',{host,port,timeout:6000});await sleep(1000);};
+  try{
+    for(const [port,unit] of tries){
+      try{vprog('Collegamento a '+host+':'+port+' (ID '+unit+')…');await open(port);MB.unit=unit;first=await mbRead(30000,15);rec.conn={host,port,unit};break;}
+      catch(e){last=errMsg(e);}
+    }
+    if(!rec.conn)throw new Error('Inverter non raggiungibile: '+last+'. Controlla di essere collegato al Wi-Fi dell\'inverter (o alla rete del dongle) e l\'indirizzo IP.');
+    for(let k=0;k<REGS.length;k++){
+      const R=REGS[k];vprog('Lettura '+(k+1)+' di '+REGS.length+': '+R[1]);
+      for(let att=0;att<2;att++){
+        try{const w=k===0?first:await mbRead(R[2],R[3]);rec.vals[R[0]]={raw:w,v:regDecode(w,R[4],R[5])};delete rec.errs[R[0]];break;}
+        catch(e){rec.errs[R[0]]=errMsg(e);if(/non riuscita|fuori sequenza|non collegato/i.test(rec.errs[R[0]])&&att===0){try{await open(rec.conn.port);}catch(_){}}else break;}
+      }
+      await sleep(120);
+    }
+    toast('Lettura completata');
+  }catch(e){rec.fail=errMsg(e);toast('Lettura non riuscita');}
+  finally{try{await nat('close');}catch(_){}VBUSY=false;vprog('');}
+  S.verif[v.id]=rec;save();render();
+}
+const nrm=x=>String(x||'').toUpperCase().replace(/[\s_-]/g,'');
+function segKey(t){return [tmin(t.da),t.a==='24:00'?1440:(tmin(t.a)===1439?1440:tmin(t.a)),t.az,(t.g||[]).slice().sort().join('')].join('|');}
+const segTxt=t=>t.da+'–'+t.a+' '+(t.az==='c'?'carica':'scarica')+' '+OPT.giorni.filter(g=>(t.g||[]).includes(g.v)).map(g=>g.l).join(' ');
+// Confronto progetto / inverter: righe {l, exp, got, st: ok | diff | na | err}
+function verifRows(v,rec){
+  const rows=[],bp=S.bp,val=k=>rec.vals[k]?rec.vals[k].v:undefined,sp=spec(v)||{};
+  const row=(l,exp,k,fmt,cmp)=>{const g=val(k);if(g===undefined){rows.push({l,exp,got:'',st:'err',note:rec.errs[k]||'non letto'});return;}
+    rows.push({l,exp,got:fmt?fmt(g):g,st:cmp==null?'na':(cmp(g)?'ok':'diff')});};
+  const near=(a,b,t)=>Math.abs(a-b)<=t,kw=x=>f1(x,2)+' kW',pc=x=>f1(x,1)+' %';
+  row('Modello',invName(v),'model',null,g=>nrm(g).startsWith(nrm(invName(v)))||nrm(invName(v)).startsWith(nrm(g)));
+  row('Numero di serie',v.sn||'(non inserito)','sn',null,v.sn?(g=>nrm(g)===nrm(v.sn)):null);
+  row('Potenza nominale',ok(sp.kw)?kw(sp.kw):'—','pn',kw,ok(sp.kw)?(g=>near(g,sp.kw,0.05)):null);
+  const kwh=packsOf(v).reduce((x,b)=>{const p=pack(b);return x+(p?p.kwh:0);},0);
+  row('Capacità batterie',kwh?f1(kwh,1)+' kWh utili':'nessuna','bcap',x=>f1(x,1)+' kWh',null);
+  if(packsOf(v).length){
+    const mc=MODE_CODE[bp.mode];
+    row('Modalità batteria',(OPT.modes.find(x=>x.v===bp.mode)||{}).l||'—','mode',g=>MODE_L[g]||('valore '+g),mc==null?null:(g=>g===mc||(mc===5&&g===3)));
+    [['pch','Potenza max di carica'],['pdis','Potenza max di scarica']].forEach(([k,l])=>{const e=num(bp[k]);row(l,ok(e)?kw(e):'massima (non indicata)',k,kw,ok(e)?(g=>near(g,e,0.05)):null);});
+    [['socmax','SOC di fine carica'],['socmin','SOC di fine scarica']].forEach(([k,l])=>{const e=num(bp[k]);row(l,ok(e)?pc(e):'—',k,pc,ok(e)?(g=>near(g,e,0.5)):null);});
+    row('Carica dalla rete',bp.grid?'Attiva':'Disattiva','grid',g=>g?'Attiva':'Disattiva',g=>!!g===!!bp.grid);
+    if(bp.grid){const e=num(bp.gridsoc),p=num(bp.gridp);row('SOC di fine carica dalla rete',ok(e)?pc(e):'—','gridsoc',pc,ok(e)?(g=>near(g,e,0.5)):null);
+      row('Potenza max di carica dalla rete',ok(p)?kw(p):'—','gridp',kw,ok(p)?(g=>near(g,p,0.05)):null);}
+    if(S.bk.a){const e=num(bp.socbk);row('SOC di backup',ok(e)?pc(e):'—','socbk',pc,ok(e)?(g=>near(g,e,0.5)):null);}
+    if(bp.mode==='tou'){
+      const ex=bp.excess===OPT.excess[1]?0:1;row('Energia FV in eccesso',bp.excess,'excess',g=>g===1?OPT.excess[0]:g===0?OPT.excess[1]:'valore '+g,g=>g===ex);
+      const want=S.tou.map(segKey).sort().join(';');
+      row('Fasce orarie TOU',S.tou.length?S.tou.map(t=>esc(segTxt(t))).join('<br>'):'nessuna','tou',g=>g.err?esc(g.err):(g.seg.length?g.seg.map(t=>esc(segTxt(t))).join('<br>'):'nessuna'),g=>!g.err&&g.seg.map(segKey).sort().join(';')===want);
+    }
+  }
+  if(S.met.pac){
+    const pcd=PAC_CODE[S.met.pac],e=num(S.met.plim);
+    row('Controllo potenza attiva',(OPT.pac.find(x=>x.v===S.met.pac)||{}).l,'pac',g=>PAC_L[g]||('valore '+g),g=>g===pcd);
+    if(S.met.pac==='kw')row('Limite di immissione',ok(e)?kw(e):'—','plimw',kw,ok(e)?(g=>near(g,e,0.05)):null);
+    if(S.met.pac==='pc')row('Limite di immissione',ok(e)?pc(e):'—','plimp',pc,ok(e)?(g=>near(g,e,0.5)):null);
+  }
+  return rows;
+}
+const VST={ok:['ok','✓ Uguale'],diff:['err','✗ Diverso'],na:['info','Info'],err:['warn','Non letto']};
+function verifTable(rows,print){
+  return '<table class="t vt"><thead><tr><th>Parametro</th><th>Progetto</th><th>Inverter</th><th>Esito</th></tr></thead><tbody>'+rows.map(r=>
+    '<tr class="'+r.st+'"><td>'+esc(r.l)+'</td><td>'+(r.l==='Fasce orarie TOU'?r.exp:esc(r.exp))+'</td><td>'+(r.l==='Fasce orarie TOU'?r.got:esc(r.got))+'</td><td><span class="vs '+VST[r.st][0]+'">'+VST[r.st][1]+'</span>'+(r.note?'<br><small>'+esc(r.note)+'</small>':'')+'</td></tr>').join('')+'</tbody></table>';
+}
+function verifLive(rec){
+  const g=k=>rec.vals[k]?rec.vals[k].v:undefined,it=[['Potenza FV','pvp',x=>f1(x,2)+' kW'],['Potenza AC','acp',x=>f1(x,2)+' kW'],['SOC batterie','bsoc',x=>f1(x,1)+' %'],['Batterie','bpw',x=>f1(x,2)+' kW'],['Meter','mst',x=>x===1?'collegato':'non collegato'],['Al meter','mpw',x=>f1(x,2)+' kW']];
+  return '<div class="kpi">'+it.filter(x=>g(x[1])!==undefined).map(x=>'<div><small>'+esc(x[0])+'</small><b>'+esc(x[2](g(x[1])))+'</b></div>').join('')+'</div>';
+}
+function verifSummary(rows){const d=rows.filter(r=>r.st==='diff').length,e=rows.filter(r=>r.st==='err').length;
+  return d?{cls:'err',t:d+(d>1?' parametri diversi':' parametro diverso')+' dal progetto'}:(e?{cls:'warn',t:'Nessuna differenza, ma '+e+(e>1?' valori non letti':' valore non letto')}:{cls:'ok',t:'Inverter programmato come da progetto'});}
+function verifRec(v){return S.verif&&S.verif[v.id];}
+function verifBlock(v,print){
+  const rec=verifRec(v);if(!rec)return print?'':'<div class="empty">Nessuna lettura per questo inverter.</div>';
+  const when=new Date(rec.t).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'});
+  if(rec.fail)return '<div class="msg err"><b>'+esc(when)+'</b> '+esc(rec.fail)+'</div>';
+  const rows=verifRows(v,rec),sm=verifSummary(rows);
+  return '<div class="banner '+sm.cls+'">'+esc(sm.t)+'<small>Lettura del '+esc(when)+' · '+esc(rec.conn.host+':'+rec.conn.port)+' · ID '+esc(rec.conn.unit)+'</small></div>'+
+    (print?'':verifLive(rec))+'<div class="tw">'+verifTable(rows,print)+'</div>';
+}
+/* ===== STEP: VERIFICA INVERTER ===== */
+function stepVerif(){
+  const c=S.vconn,nat0=isNative();
+  if(!S.invs.some(v=>v.id===c.inv))c.inv=S.invs[0]?S.invs[0].id:'';
+  const v=S.invs.find(x=>x.id===c.inv);
+  let h=head('Verifica inverter','L\'app legge dall\'inverter come è programmato e lo confronta con il progetto. Non modifica nulla.')+
+  guide('<p>Collega il telefono al <b>Wi-Fi dell\'inverter</b> (rete SUN2000-…, la stessa che usi per FusionSolar). Se Android avvisa che la rete non ha Internet, scegli di <b>restare connesso</b>. Poi premi <b>Leggi dall\'inverter</b>.</p>','<p>Per ogni parametro (modalità, SOC, potenze, carica dalla rete, fasce orarie, limitazione) vedi il valore del progetto, quello dell\'inverter e se coincidono, più i dati in tempo reale.</p>','<p>Funziona solo nell\'<b>app Android Dati Huawei</b>: il browser non può collegarsi all\'inverter. Prima versione: se un valore risulta "non letto" o strano, salva la lettura e mandala per la correzione.</p>');
+  if(!nat0)h+='<div class="msg info">Sei nel browser: qui vedi solo le letture già fatte con l\'app Android. Per installare l\'app scarica il file APK da GitHub (repository Sunengo → Actions → "App Android" → ultima esecuzione → Artifacts).</div>';
+  if(!S.invs.length)return h+'<div class="msg info">Aggiungi prima l\'inverter (passo 2).</div>';
+  h+='<div class="card"><h3>Collegamento</h3><div class="grid">'+
+    (S.invs.length>1?fld('vconn.inv','Inverter da verificare',{type:'select',opts:invList(),blank:false,rr:1}):'')+
+    fld('vconn.mode','Collegamento',{type:'select',opts:[{v:'ap',l:'Wi-Fi dell\'inverter (SUN2000-…)'},{v:'dongle',l:'Smart Dongle nella rete del cliente'}],blank:false,rr:1,help:'Wi-Fi dell\'inverter: il modo più semplice in cantiere. Smart Dongle: telefono nella stessa rete Wi-Fi del dongle, con "Modbus TCP" abilitato nelle impostazioni del dongle in FusionSolar.'})+
+    fld('vconn.host','Indirizzo IP',{ph:c.mode==='ap'?'192.168.200.1':(S.com.ip||'es. 192.168.1.60')})+fld('vconn.port','Porta',{type:'number',min:1})+
+    fld('vconn.unit','ID Modbus',{type:'number',min:0,help:'Wi-Fi dell\'inverter: 0 (se non risponde l\'app prova anche 1 e la porta 502). Smart Dongle: l\'indirizzo RS485 dell\'inverter (di solito 1).'})+'</div>'+
+    '<div class="chips" style="margin-top:12px;align-items:center"><button type="button" class="btn pri" data-act="verif-run"'+(nat0&&!VBUSY?'':' disabled')+'>▶ Leggi dall\'inverter</button><span class="sub" id="vprog" style="margin:0"></span></div></div>';
+  h+='<div class="card"><h3>Esito'+(v?' · '+esc(invName(v)):'')+'</h3>'+(v?verifBlock(v,false):'')+
+    (v&&verifRec(v)&&!verifRec(v).fail?'<div class="chips" style="margin-top:10px">'+(!v.sn&&verifRec(v).vals.sn?'<button type="button" class="btn" data-act="verif-sn">Copia il numero di serie nel progetto</button>':'')+'<button type="button" class="btn" data-act="verif-exp">⬇ Salva lettura (.json)</button></div>':'')+'</div>';
+  return h;
+}
+function verifDoc(){return '<h2>Verifica programmazione inverter</h2>'+S.invs.map((v,i)=>verifRec(v)?'<h3>I'+(i+1)+' · '+esc(invName(v))+'</h3>'+verifBlock(v,true):'').join('')+'<p class="meta">Lettura in sola lettura con l\'app Dati Huawei (Modbus TCP). Nessun parametro è stato modificato.</p>';}
 /* ===== STEP 9: COLLAUDO E DOCUMENTI ===== */
 function stepTest(){
   const R=validate(),e=R.filter(x=>x.lv==='err').length,w=R.filter(x=>x.lv==='warn').length;
@@ -1408,7 +1582,7 @@ function stepTest(){
   '<div class="card"><h3>Procedura per FusionSolar</h3>'+proc()+'</div>'+
   '<div class="card chk"><h3>Checklist di collaudo</h3>'+chkHtml()+'</div>'+
   '<div class="card"><h3>Documenti da stampare</h3><p class="sub">Scegli quali includere, poi premi Stampa (dal browser puoi salvare in PDF).</p><div class="docs">'+
-  DOCS.filter(d=>d.id!=='risp'||hasRisp()).map(d=>'<label><input type="checkbox" data-doc="'+d.id+'" checked> <span><b>'+esc(d.t)+'</b><small>'+esc(d.s)+'</small></span></label>').join('')+'</div>'+
+  DOCS.filter(d=>(d.id!=='risp'||hasRisp())&&(d.id!=='verif'||S.invs.some(v=>verifRec(v)))).map(d=>'<label><input type="checkbox" data-doc="'+d.id+'" checked> <span><b>'+esc(d.t)+'</b><small>'+esc(d.s)+'</small></span></label>').join('')+'</div>'+
   '<div class="chips" style="margin-top:12px"><button type="button" class="btn pri" data-act="print">🖨 Stampa / salva PDF</button><button type="button" class="btn" data-act="exp-json">⬇ File per Claude (.json)</button><button type="button" class="btn" data-act="exp-csv">⬇ Distinta (.csv)</button></div></div>'+
   '<div class="card">'+fld('notes','Note finali',{type:'textarea'})+'</div>';
 }
@@ -1422,8 +1596,9 @@ const SICON=['<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20
   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   '<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4 10.5h9M4 13.5h9"/>',
   '<path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/>',
+  '<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/><path d="M8 11l2 2 4-4"/>',
   '<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>'];
-const FNMAP={cantiere:stepCantiere,inverter:stepInverter,stringhe:stepStringhe,batterie:stepBatterie,meter:stepMeter,mag:stepMag,prog:stepProg,risp:stepRisp,fusion:stepFusion,test:stepTest};
+const FNMAP={verif:stepVerif,cantiere:stepCantiere,inverter:stepInverter,stringhe:stepStringhe,batterie:stepBatterie,meter:stepMeter,mag:stepMag,prog:stepProg,risp:stepRisp,fusion:stepFusion,test:stepTest};
 const SICONM={};ALLSTEPS.forEach((x,i)=>{SICONM[x.id]=SICON[i];});
 const LIVE={calc:k=>calcHtml(+k),kwp:kwpCard,tl:touTimeline,touiss:touIssHtml,risp:rispResults,mag:magTable};
 function live(){clearTimeout(live.t);live.t=setTimeout(liveNow,90);}
@@ -1453,6 +1628,9 @@ function act(e){
   if(a==='help'){const f=b.closest('.fld');const hp=f&&f.querySelector('.hp');if(hp)hp.hidden=!hp.hidden;return;}
   if(a==='goto'){goto(+b.dataset.st);return;}
   if(a==='art-open'){openArt();return;}
+  if(a==='verif-run'){verifRun();return;}
+  if(a==='verif-sn'){const v=S.invs.find(x=>x.id===S.vconn.inv)||S.invs[0],r=v&&verifRec(v);if(r&&r.vals.sn){v.sn=r.vals.sn.v;touch();render();toast('Numero di serie copiato');}return;}
+  if(a==='verif-exp'){const v=S.invs.find(x=>x.id===S.vconn.inv)||S.invs[0],r=v&&verifRec(v);if(r)dl('Lettura_'+nrm(invName(v))+'_'+r.t.slice(0,16).replace(/[:T]/g,'-')+'.json',JSON.stringify({tipo:'huawei-lettura-inverter',inverter:invName(v),progetto_sn:v.sn,registri:REGS,lettura:r},null,1),'application/json');return;}
   if(a==='print-mag'){printCommessa();return;}
   if(a==='add-mag'){const v=$('#addMag').value,q=num($('#addMagQty').value);const o={id:uid(),a:v==='__free'?'':v,cat:'Altri materiali',marca:'',d:'',um:'pz',q:String(q>0?q:1),note:''};S.mag.push(o);if(!o.a)OPEN[o.id]=true;touch();render();toast('Materiale aggiunto');return;}
   if(a==='mod-save'){const m=S.mods[i];if(!m.marca&&!m.modello){toast('Scrivi prima marca e modello');return;}let x=m.cat&&CUSTOM.find(z=>z.c===m.cat);
@@ -1491,6 +1669,7 @@ function onChange(e){
   if(!t.dataset||!t.dataset.p)return;
   setP(t.dataset.p,t.type==='checkbox'?t.checked:t.value);
   if(t.dataset.p==='meta.stima'){buildSteps();LASTTEST=null;}
+  if(t.dataset.p==='vconn.mode'){const d=VCONN[t.value]||VCONN.ap;Object.assign(S.vconn,d);if(t.value==='dongle'){S.vconn.host=S.com.ip||'';const v=S.invs.find(x=>x.id===S.vconn.inv);S.vconn.unit=String((v&&v.addr)||1);}}
   if(/^invs\.\d+\.(a|spec\.nmppt)$/.test(t.dataset.p))fixInv(S.invs[+t.dataset.p.split('.')[1]]);
   touch();
   if(t.dataset.rr==='1')render();else live();
@@ -1505,10 +1684,10 @@ function doPrint(){
   DOCS.filter(d=>sel.includes(d.id)).forEach((d,i)=>{h+='<div class="'+(i?'pb':'')+'">'+d.fn()+'</div>';});
   h+='<p class="meta" style="margin-top:20px">Nessuna password è inclusa in questo documento. Dati tecnici: datasheet Huawei; articoli: '+LISTINO+'.</p>';
   $('#print').innerHTML=h;
-  setTimeout(()=>window.print(),50);
+  setTimeout(runPrint,50);
 }
 function fname(ext){const c=(S.meta.cliente||'impianto').replace(/[^\w\-]+/g,'_').slice(0,30);return 'Huawei_'+c+'_'+new Date().toISOString().slice(0,10)+'.'+ext;}
-function dl(name,text,type){const b=new Blob([text],{type:type||'application/octet-stream'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},500);}
+function dl(name,text,type){if(isNative()){nat('share',{name,mime:type||'application/octet-stream',data:btoa(unescape(encodeURIComponent(text)))}).catch(e=>toast(errMsg(e)));return;}const b=new Blob([text],{type:type||'application/octet-stream'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},500);}
 function rispSummary(){const R=simulate();if(R.err)return null;const r=v=>Math.round(v),pb=payback(battCost(),R.savBatt);return {produzione_kwh:r(R.prod),consumi_kwh:r(R.cons),autosufficienza_solo_fv:+R.asN.toFixed(3),autosufficienza_con_batteria:+R.asB.toFixed(3),risparmio_annuo_eur:R.priced?r(R.savTot):null,risparmio_batteria_eur:R.priced?r(R.savBatt):null,rientro_batteria_anni:R.priced&&ok(pb)?+pb.toFixed(1):null};}
 function expJson(){dl(fname('json'),JSON.stringify({tipo:'huawei-fusionsolar-impianto',versione:1,data:new Date().toISOString(),listino:LISTINO,impianto:S,articoli_aggiunti:CUSTOM,riepilogo:{kwp:+tot().kwp.toFixed(3),kwac:tot().kwac,kwh:tot().kwh,risparmio:hasRisp()?rispSummary():null,controlli:validate()}},null,1),'application/json');toast('File salvato: allegalo a Claude');}
 function expCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',n=v=>v==null?'':String(v).replace('.',',');
@@ -1551,5 +1730,5 @@ function init(){
   render(false);
 }
 document.addEventListener('DOMContentLoaded',init);
-</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('sw.js');}</script>
+</script><script>if('serviceWorker' in navigator&&location.protocol!=='file:'&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())){navigator.serviceWorker.register('sw.js');}</script>
 </body></html>
