@@ -11,7 +11,7 @@ Nell'app Android funzionano anche "Salva .json", la distinta `.csv` (si aprono c
 
 Gli aggiornamenti si installano sopra la versione precedente senza disinstallare: tutte le versioni sono firmate con la stessa chiave.
 
-**I cantieri salvati nel browser non passano da soli nell'app** (sono archivi separati): salvali con "Salva .json" e riaprili nell'app con "Apri file". Lo stesso vale per gli articoli (finestra Articoli → Esporta/Importa).
+**Le commesse salvate nel browser o su un altro dispositivo non passano da sole nell'app** (ogni dispositivo ha il suo archivio): in **Commesse** usa **Esporta** sul dispositivo di partenza e **Importa file** su quello di arrivo. Se una commessa c'è già, resta la versione modificata per ultima. Gli articoli viaggiano insieme alle commesse (oppure: finestra Articoli → Esporta/Importa).
 
 ## Usare la verifica in cantiere
 1. Collega il telefono al Wi-Fi dell'inverter (rete `SUN2000-…`). Se Android avvisa che la rete non ha Internet, scegli di restare connesso.

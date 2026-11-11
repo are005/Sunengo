@@ -1,5 +1,5 @@
 // Cache per uso offline dell'app Huawei. Aumentare VERSION quando si aggiorna index.html.
-const VERSION = 'dati-huawei-v5';
+const VERSION = 'dati-huawei-v6';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', '../icon-180.png', '../icon-192.png', '../icon-512.png'];
 
 self.addEventListener('install', e => {
