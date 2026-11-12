@@ -1,0 +1,9 @@
+{
+  "appId": "it.sunengo.datihuawei",
+  "appName": "Dati Huawei",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  }
+}
